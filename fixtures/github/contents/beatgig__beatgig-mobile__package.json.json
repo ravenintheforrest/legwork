@@ -1,0 +1,19 @@
+{
+  "_note": "authored fixture — sample data",
+  "name": "package.json",
+  "path": "package.json",
+  "type": "file",
+  "html_url": "https://github.com/beatgig/beatgig-mobile/blob/main/package.json",
+  "content": {
+    "name": "beatgig-mobile",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+      "expo": "~50.0.17",
+      "react": "18.2.0",
+      "react-native": "~0.73.6",
+      "expo-router": "~3.4.10",
+      "expo-image": "~1.10.6"
+    }
+  }
+}

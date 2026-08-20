@@ -1,0 +1,18 @@
+{
+  "_note": "authored fixture — fictional person by design",
+  "name": "package.json",
+  "path": "package.json",
+  "type": "file",
+  "html_url": "https://github.com/hobbydev-example/expo-todo/blob/main/package.json",
+  "content": {
+    "name": "expo-todo",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+      "expo": "~48.0.18",
+      "react": "18.1.0",
+      "react-native": "0.71.8",
+      "expo-status-bar": "~1.4.4"
+    }
+  }
+}

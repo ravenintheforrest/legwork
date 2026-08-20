@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — sample data",
+  "login": "incident-io",
+  "type": "Organization",
+  "name": "incident.io",
+  "blog": "https://incident.io",
+  "description": "incident.io is incident management for teams that ship software. Declare, run, and learn from incidents without leaving Slack.",
+  "html_url": "https://github.com/incident-io",
+  "public_repos": 38,
+  "followers": 520,
+  "created_at": "2021-01-19T00:00:00Z"
+}

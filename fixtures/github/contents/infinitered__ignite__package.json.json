@@ -1,0 +1,19 @@
+{
+  "_note": "authored fixture — sample data",
+  "name": "package.json",
+  "path": "package.json",
+  "type": "file",
+  "html_url": "https://github.com/infinitered/ignite/blob/main/package.json",
+  "content": {
+    "name": "ignite",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+      "expo": "~51.0.28",
+      "react": "18.2.0",
+      "react-native": "0.74.5",
+      "expo-font": "~12.0.10",
+      "expo-localization": "~15.0.3"
+    }
+  }
+}

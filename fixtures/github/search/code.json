@@ -1,7 +1,7 @@
 {
   "_note": "authored fixture — sample data over real public companies; recorded shape of GET /search/code?q=filename:eas.json",
   "query": "filename:eas.json expo",
-  "total_count": 12,
+  "total_count": 13,
   "incomplete_results": false,
   "items": [
     {
@@ -16,6 +16,22 @@
         "description": "Partiful for iOS and Android",
         "owner": {
           "login": "partiful",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/partiful-app/mobile-legacy/blob/main/eas.json",
+      "repository": {
+        "full_name": "partiful-app/mobile-legacy",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/partiful-app/mobile-legacy",
+        "description": "Older home of the Partiful mobile app (authored duplicate-spelling org in the legwork fixture set)",
+        "owner": {
+          "login": "partiful-app",
           "type": "Organization"
         }
       }

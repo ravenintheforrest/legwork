@@ -51,7 +51,7 @@ agents:
 
 loops:
   eval:        { trigger: per_run,   gate: regression, golden_set: packs/expo/golden-set.jsonl }
-  review:      { trigger: daily,     cmd: legwork review, tracks: [acceptance_rate, edit_depth] }
+  review:      { trigger: daily,     cmd: legwork review, tracks: [acceptance_rate, edit_depth], confidence_gate: 0.80 }
   heal:        { trigger: run_error, cmd: legwork doctor, autonomy: propose, notify: slack }
   improve:     { trigger: manual,    cmd: legwork improve, action: open_pr }   # the fleet PRs itself
   outcome:     { trigger: weekly,    source: outcomes, reweights: qualify.signals }

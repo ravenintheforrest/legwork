@@ -71,7 +71,8 @@ export async function runEvals(opts: EvalOptions = {}): Promise<void> {
   process.exitCode = 1;
 }
 
-// The pipeline, minus brief (which writes files): discover -> resolve -> qualify.
+// The pipeline, minus brief (which writes files):
+// discover -> discover-gitlab -> resolve -> enrich -> dedupe -> qualify.
 async function scoreFixtures(pack: string): Promise<{ discovered: Account[]; state: Account[] }> {
   const ctx: RunContext = {
     pack,
@@ -86,7 +87,10 @@ async function scoreFixtures(pack: string): Promise<{ discovered: Account[]; sta
 
   const discovered = await AGENTS.discover!.run([], ctx);
   let state = mergeAccounts([], discovered);
+  state = mergeAccounts(state, await AGENTS["discover-gitlab"]!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.resolve!.run(state, ctx));
+  state = mergeAccounts(state, await AGENTS.enrich!.run(state, ctx));
+  state = mergeAccounts(state, await AGENTS.dedupe!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.qualify!.run(state, ctx));
   return { discovered, state };
 }
@@ -98,10 +102,19 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
   const metrics: Metric[] = [
     { key: "discover", label: "discover.presence", correct: 0, total: 0 },
     { key: "resolve_domain", label: "resolve.domain", correct: 0, total: 0 },
+    { key: "enrich_presence", label: "enrich.presence", correct: 0, total: 0 },
     { key: "qualify_verdict", label: "qualify.verdict", correct: 0, total: 0 },
     { key: "qualify_segment", label: "qualify.segment", correct: 0, total: 0 },
+    { key: "dedupe_domains", label: "dedupe.domains", correct: 0, total: 0 },
   ];
-  const [presence, domain, verdict, segment] = metrics as [Metric, Metric, Metric, Metric];
+  const [presence, domain, enriched, verdict, segment, deduped] = metrics as [
+    Metric,
+    Metric,
+    Metric,
+    Metric,
+    Metric,
+    Metric,
+  ];
 
   for (const row of golden) {
     const account = byOrg.get(row.org);
@@ -113,6 +126,10 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
     if (row.domain) {
       domain.total += 1;
       if (account?.domain === row.domain) domain.correct += 1;
+
+      // A labeled domain means a reachable homepage: enrich must have receipts for it.
+      enriched.total += 1;
+      if (account?.evidence.some((e) => e.agent === "enrich")) enriched.correct += 1;
     }
 
     if (row.verdict === "qualified" || row.verdict === "unqualified") {
@@ -125,6 +142,16 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
       segment.total += 1;
       if (account?.segment === row.segment) segment.correct += 1;
     }
+  }
+
+  // dedupe: after the pipeline, every domain in state belongs to exactly one account.
+  const holders = new Map<string, number>();
+  for (const account of state) {
+    if (account.domain) holders.set(account.domain, (holders.get(account.domain) ?? 0) + 1);
+  }
+  for (const count of holders.values()) {
+    deduped.total += 1;
+    if (count === 1) deduped.correct += 1;
   }
 
   return metrics;

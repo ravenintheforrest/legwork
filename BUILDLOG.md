@@ -37,3 +37,21 @@ One entry per working session: date, what happened, why it went that way.
 - Fixtures = authored sample data over real public companies; adapters = the live path. Never shared accounts, only env vars.
 - Hosting: GitHub-native (Actions cron + Pages). Cloudflare Workers documented as the production webhook path, not built.
 - Research phase artifacts live in the vault hub (fleet-hub-base.html): philosophy from 12 sources, Expo intel, channel map, ICP.
+
+## 2026-08-20 — steps 5–6, live mode proven
+- HITL review loop: confidence gate (registry `loops.review.confidence_gate: 0.80`) routes
+  low-confidence briefs to `briefs/queue/`; `legwork review` (interactive + `--approve/--reject/--stats`)
+  logs decisions to `data/reviews.jsonl`. Stats track the approved-vs-rejected confidence gap —
+  narrow gap means confidence isn't predicting human judgment.
+- Fixture-mode briefs now carry a loud FIXTURE DATA banner (md + slack) so authored evidence
+  can never be mistaken for real intelligence on a screen.
+- Step-6 agents landed (parallel subagent build, verified independently): enrich (homepage/careers
+  via new web fetch layer), dedupe (domain reconciliation, no deletes, no invented evidence),
+  intent (EAS/build issues + HN who-is-hiring), discover-gitlab (the retirement candidate).
+  Pipeline: discover → discover-gitlab → resolve → enrich → dedupe → qualify → intent → brief.
+- Brief regrouped to match spec: signals → company → scale/velocity → why now → opener.
+- Evals: six metrics, all 1.00; regression gate holds; demo byte-identical across runs.
+- **First live run** (GITHUB_TOKEN): 31 real accounts, 4 briefed, all queued below the gate —
+  30-day public-GitHub discovery skews hobbyist, confirming the channel-map thesis that
+  production Expo lives in private repos / other channels. Receipts spot-checked: all 200.
+- Refine list: evidence-level dedupe in briefs (same eas.json cited at branch + sha URL).

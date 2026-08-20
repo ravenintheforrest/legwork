@@ -8,6 +8,7 @@ import { runEvals } from "./evals.js";
 import { readRuns } from "./runlog.js";
 import { loadAccounts } from "./store.js";
 import { runPipeline, type RunSummary } from "./runner.js";
+import { runReview } from "./review.js";
 import type { Account, RunRecord } from "./types.js";
 
 const ACCOUNTS_FILE = "data/accounts.jsonl";
@@ -65,7 +66,13 @@ program.command("show").description("everything known about one account").argume
     printAccount(account, loadAccounts(ACCOUNTS_FILE));
   });
 
-program.command("review").description("approve/reject queued briefs (HITL loop)").action(todo("review"));
+program.command("review").description("approve/reject queued briefs (HITL loop)")
+  .option("--approve <org>", "approve one queued brief (non-interactive)")
+  .option("--reject <org>", "reject one queued brief (non-interactive)")
+  .option("--stats", "acceptance rate and queue depth")
+  .action(async (options: { approve?: string; reject?: string; stats?: boolean }) => {
+    await runReview(options);
+  });
 program.command("doctor").description("diagnose a failing run (self-heal loop)").argument("[run]").action(todo("doctor"));
 program.command("improve").description("draft a prompt/rubric revision as a PR").argument("<agent>").action(todo("improve"));
 program.command("retire").description("generate a retirement post-mortem").argument("<agent>").action(todo("retire"));

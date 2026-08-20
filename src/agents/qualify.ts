@@ -45,7 +45,7 @@ export const qualify: AgentDef = {
     const out: Account[] = [];
 
     for (const account of input) {
-      if (account.stage !== "resolved") continue;
+      if (account.stage !== "enriched") continue;
 
       const profile = await profileFor(account, ctx);
       const signals = await scoreAccount(account, profile, ctx);
@@ -64,7 +64,7 @@ export const qualify: AgentDef = {
 
       out.push({
         ...account,
-        stage: qualified ? "qualified" : "resolved",
+        stage: qualified ? "qualified" : "enriched",
         segment: qualified ? segmentOf(profile, signals) : undefined,
         confidence,
         evidence: [...carried, ...fresh],

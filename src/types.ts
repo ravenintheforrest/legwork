@@ -20,6 +20,14 @@ export interface Account {
   updated: string;             // ISO date
   repos?: string[];            // github full_names, sorted — set by discover
   kind?: "org" | "user";       // set by resolve; user accounts never qualify
+  review?: ReviewState;        // present once a brief entered the HITL gate
+}
+
+// HITL loop state (F7): briefs below the registry's confidence_gate queue for a human;
+// decisions accumulate in data/reviews.jsonl and feed acceptance rates and retirement.
+export interface ReviewState {
+  status: "queued" | "approved" | "rejected";
+  date: string;
 }
 
 export interface Evidence {

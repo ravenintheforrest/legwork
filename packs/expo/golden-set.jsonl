@@ -10,3 +10,5 @@
 {"org":"infinitered","verdict":"qualified","segment":"D","domain":"infinitered.com","why":"React Native consultancy; maintains Ignite, ships client apps on EAS","labeled_by":"bootstrap","date":"2026-08-20"}
 {"org":"hobbydev-example","verdict":"unqualified","why":"individual side project; no production signals","labeled_by":"bootstrap","date":"2026-08-20"}
 {"org":"acme-mobile","verdict":"unqualified","why":"archived app, RN 0.64, no store presence","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"partiful-app","verdict":"unqualified","why":"duplicate org spelling of partiful (same domain); dedupe merges its receipts into partiful and drops its confidence","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"mika-hobbyist","verdict":"exclude","why":"GitLab personal namespace — the marginal discover-gitlab hit that never resolves to a company","labeled_by":"bootstrap","date":"2026-08-20"}

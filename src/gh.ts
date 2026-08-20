@@ -50,6 +50,18 @@ export interface Repo {
   default_branch?: string;
 }
 
+export interface IssueItem {
+  title: string;
+  html_url: string;
+  state?: string;
+  created_at?: string;
+}
+
+export interface IssueSearch {
+  total_count: number;
+  items: IssueItem[];
+}
+
 export interface ContentsEntry {
   name: string;
   path: string;
@@ -98,6 +110,19 @@ export class GitHubClient {
       return body;
     }
     const body = await this.get<CodeSearch>(`${API}/search/code?q=${encodeURIComponent(query)}`);
+    return body ?? { total_count: 0, items: [] };
+  }
+
+  // Issue search, fixture-keyed by org (fixtures/github/issues/<org>.json). Fixture
+  // mode records one canned result per org regardless of the query terms — the same
+  // documented limitation as searchCode. An absent fixture is an empty result: no
+  // matching issues is a normal outcome, not a missing fixture.
+  async searchIssues(org: string, query: string): Promise<IssueSearch> {
+    if (this.mode === "fixture") {
+      const file = join(this.fixtureDir, "github", "issues", `${org}.json`);
+      return readJson<IssueSearch>(file) ?? { total_count: 0, items: [] };
+    }
+    const body = await this.get<IssueSearch>(`${API}/search/issues?q=${encodeURIComponent(query)}`);
     return body ?? { total_count: 0, items: [] };
   }
 

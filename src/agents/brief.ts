@@ -23,14 +23,25 @@ export const brief: AgentDef = {
     if (queue.length === 0) return [];
 
     const segmentNames = loadSegmentNames(ctx.pack);
+    const gate = confidenceGate();
     mkdirSync(BRIEFS_DIR, { recursive: true });
+    mkdirSync(join(BRIEFS_DIR, "queue"), { recursive: true });
     const out: Account[] = [];
 
     for (const account of queue) {
       const body = (await modelBrief(account, ctx, segmentNames)) ?? renderBrief(account, ctx, segmentNames);
-      writeFileSync(join(BRIEFS_DIR, `${account.org}.md`), body);
-      writeFileSync(join(BRIEFS_DIR, `${account.org}.slack.txt`), renderSlack(account, segmentNames));
-      out.push({ ...account, stage: "briefed", updated: ctx.now() });
+      // HITL gate: confidence below the registry bar queues for a human (F7);
+      // at or above it, the brief publishes directly.
+      const queued = (account.confidence ?? 0) < gate;
+      const dir = queued ? join(BRIEFS_DIR, "queue") : BRIEFS_DIR;
+      writeFileSync(join(dir, `${account.org}.md`), body);
+      writeFileSync(join(dir, `${account.org}.slack.txt`), renderSlack(account, segmentNames, ctx.mode));
+      out.push({
+        ...account,
+        stage: "briefed",
+        updated: ctx.now(),
+        ...(queued ? { review: { status: "queued" as const, date: ctx.now() } } : {}),
+      });
     }
 
     return out;
@@ -92,6 +103,9 @@ function renderBrief(account: Account, ctx: RunContext, segmentNames: Record<str
   lines.push(`# ${company} — account brief`, "");
   lines.push(metaLine(account, segmentNames));
   lines.push(`generated ${ctx.now().slice(0, 10)} · legwork brief (template mode)`, "");
+  if (ctx.mode === "fixture") {
+    lines.push("> **FIXTURE DATA** — authored sample evidence; source links may not resolve.", "> Run `legwork run` (live mode) for real receipts.", "");
+  }
 
   lines.push("## Production Expo signals");
   for (const e of groups.signals) lines.push(bullet(e));
@@ -106,6 +120,12 @@ function renderBrief(account: Account, ctx: RunContext, segmentNames: Record<str
   if (groups.store.length > 0) {
     lines.push("## Scale and velocity");
     for (const e of groups.store) lines.push(bullet(e));
+    lines.push("");
+  }
+
+  if (groups.whyNow.length > 0) {
+    lines.push("## Why now");
+    for (const e of groups.whyNow) lines.push(bullet(e));
     lines.push("");
   }
 
@@ -149,7 +169,7 @@ function cite(e: Evidence): string {
   return `${e.claim} ([source](${e.url}))`;
 }
 
-function renderSlack(account: Account, segmentNames: Record<string, string>): string {
+function renderSlack(account: Account, segmentNames: Record<string, string>, mode: "live" | "fixture"): string {
   const company = account.company ?? account.org;
   const groups = groupEvidence(account.evidence);
   const segment = account.segment ?? "";
@@ -158,33 +178,38 @@ function renderSlack(account: Account, segmentNames: Record<string, string>): st
     `*${company}* — segment ${segment}${name ? ` (${name})` : ""}, ` +
     `confidence ${(account.confidence ?? 0).toFixed(2)}`;
 
-  const strongest = [...groups.signals, ...groups.store, ...groups.company].slice(0, MAX_SLACK_BULLETS);
+  const strongest = [...groups.signals, ...groups.store, ...groups.whyNow, ...groups.company].slice(0, MAX_SLACK_BULLETS);
   const bullets = strongest.map((e) => `• ${e.claim} (${e.url})`);
 
-  return [header, ...bullets, `full brief: briefs/${account.org}.md`, ""].join("\n");
+  const banner = mode === "fixture" ? ["[FIXTURE DATA — sample evidence, links may not resolve]"] : [];
+  return [...banner, header, ...bullets, `full brief: briefs/${account.org}.md`, ""].join("\n");
 }
 
 interface EvidenceGroups {
   signals: Evidence[]; // discover + qualify (repo/profile) receipts
-  company: Evidence[]; // resolve receipts
+  company: Evidence[]; // resolve + enrich receipts (who they are)
   store: Evidence[];   // app-store receipts
+  whyNow: Evidence[];  // intent receipts (timing signals)
 }
+
+const COMPANY_AGENTS = new Set(["resolve", "enrich"]);
 
 function groupEvidence(evidence: Evidence[]): EvidenceGroups {
   const seen = new Set<string>();
-  const groups: EvidenceGroups = { signals: [], company: [], store: [] };
+  const groups: EvidenceGroups = { signals: [], company: [], store: [], whyNow: [] };
   // qualify first: its receipts are the scored signals, in signal order.
   const ordered = [
     ...evidence.filter((e) => e.agent === "qualify"),
-    ...evidence.filter((e) => e.agent === "resolve"),
-    ...evidence.filter((e) => e.agent !== "qualify" && e.agent !== "resolve"),
+    ...evidence.filter((e) => COMPANY_AGENTS.has(e.agent)),
+    ...evidence.filter((e) => e.agent !== "qualify" && !COMPANY_AGENTS.has(e.agent)),
   ];
   for (const e of ordered) {
     const key = `${e.claim}|${e.url}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    if (isStore(e)) groups.store.push(e);
-    else if (e.agent === "resolve") groups.company.push(e);
+    if (e.agent === "intent") groups.whyNow.push(e);
+    else if (isStore(e)) groups.store.push(e);
+    else if (COMPANY_AGENTS.has(e.agent)) groups.company.push(e);
     else groups.signals.push(e);
   }
   return groups;
@@ -196,6 +221,13 @@ function isStore(e: Evidence): boolean {
   } catch {
     return false;
   }
+}
+
+// The gate is registry config, not code (rule 8): loops.review.confidence_gate.
+function confidenceGate(): number {
+  const loops = loadRegistry().loops as Record<string, Record<string, unknown>>;
+  const raw = loops.review?.confidence_gate;
+  return typeof raw === "number" ? raw : 0.8;
 }
 
 function loadSegmentNames(pack: string): Record<string, string> {

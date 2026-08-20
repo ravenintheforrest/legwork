@@ -1,0 +1,14 @@
+{
+  "_note": "authored fixture — the designed near-zero yield. GitLab has no unauthenticated code search; project name/description search over public projects surfaces one hobby namespace that resolve will never map to a company. This is the honest recorded result, not a failure of the fixture.",
+  "projects": [
+    {
+      "id": 51234567,
+      "name": "expo-eas-playground",
+      "path_with_namespace": "mika-hobbyist/expo-eas-playground",
+      "namespace": { "path": "mika-hobbyist", "kind": "user", "full_path": "mika-hobbyist" },
+      "web_url": "https://gitlab.com/mika-hobbyist/expo-eas-playground",
+      "description": "Playing with Expo EAS builds (fictional namespace in the legwork fixture set)",
+      "last_activity_at": "2026-08-18T09:30:00Z"
+    }
+  ]
+}

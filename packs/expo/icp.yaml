@@ -1,0 +1,12 @@
+# Who Expo monetizes (grounded in EAS pricing: builds, update MAUs, concurrency, enterprise compliance)
+thesis: org where a React Native app is a revenue-critical surface, maintained by a JS-first team, shipping fast
+segments:
+  A: { name: mobile-first startup,      example: Partiful,   tell: app is the product; no native team by design }
+  B: { name: app-as-channel mid/ent,    example: Mollie,     tell: web-strength org extends to mobile; compliance pressure }
+  C: { name: JS-forward established org, example: MTA,       tell: OTA speed is the wedge }
+  D: { name: agency/studio,             example: "-",        tell: one org, many store developer accounts; build volume }
+signals:
+  fit: [eas_json_present, rn_version_recency, ci_config, team_size_signals]
+  scale: [store_review_volume]        # public MAU proxy — EAS bills on MAUs
+  velocity: [store_update_cadence]    # public build/OTA proxy — EAS bills on builds
+  compliance: [regulated_industry]    # enterprise-tier pressure

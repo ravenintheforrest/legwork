@@ -1,0 +1,70 @@
+# legwork registry — the fleet is config, not code.
+# An agent is: what it does, what it may spend, which model runs it, and what it must produce.
+# A loop is: what triggers it, what it may touch, and who gets told.
+
+pack: packs/expo
+
+defaults:
+  model: claude-haiku-4-5-20251001     # cheap tier unless an agent earns better (per-agent routing)
+  cost_ceiling_usd: 0.50               # per run; runner kills past this
+  autonomy: propose                    # fix | propose | human
+
+agents:
+  discover:
+    does: find repos and packages depending on Expo
+    sources: [github_code_search, npm_dependents]
+    output: candidates.jsonl
+  discover-gitlab:
+    does: probe GitLab public projects for Expo usage
+    sources: [gitlab_projects]
+    output: candidates.jsonl
+    hypothesis: public mobile repos on GitLab are rare; expect near-zero marginal contribution.
+    # This agent exists to be measured and, likely, retired — with data.
+  resolve:
+    does: repo -> org -> candidate company + domain
+    sources: [github_orgs]
+    output: accounts.jsonl
+  enrich:
+    does: company facts — what they do, size signals, careers page
+    sources: [public_web]
+    output: accounts.jsonl
+  qualify:
+    does: score production usage and segment (A mobile-first / B app-as-channel / C JS-forward org / D agency)
+    signals: [eas_json, store_links, ci_config, rn_version_recency, repo_activity, store_review_volume, store_update_cadence]
+    output: accounts.jsonl
+  intent:
+    does: recent signals — EAS/build issues, upgrade PRs, RN job posts
+    sources: [github_issues, careers_pages, hn_algolia]
+    output: signals.jsonl
+  dedupe:
+    does: reconcile duplicate orgs/domains, flag low-confidence records
+    output: accounts.jsonl
+  brief:
+    does: write the account brief — who, evidence, why now, suggested opener. Every claim carries its evidence URL.
+    model: claude-fable-5                # frontier tier earns its keep here
+    cost_ceiling_usd: 2.00
+    output: briefs/
+  ops-brief:
+    does: weekly — read the run log, report what the fleet did, what is degrading, what to retire
+    schedule: weekly
+    output: briefs/ops/
+
+loops:
+  eval:        { trigger: per_run,   gate: regression, golden_set: packs/expo/golden-set.jsonl }
+  review:      { trigger: daily,     cmd: legwork review, tracks: [acceptance_rate, edit_depth] }
+  heal:        { trigger: run_error, cmd: legwork doctor, autonomy: propose, notify: slack }
+  improve:     { trigger: manual,    cmd: legwork improve, action: open_pr }   # the fleet PRs itself
+  outcome:     { trigger: weekly,    source: outcomes, reweights: qualify.signals }
+  retirement:  { trigger: monthly,   metric: marginal_contribution, candidate_threshold: 0.05 }
+
+sources:
+  outcomes:
+    adapter: file                      # file | hubspot | clay_csv  (adapter behind one interface)
+    path: fixtures/outcomes.jsonl
+  notify:
+    adapter: slack_webhook             # falls back to stdout without SLACK_WEBHOOK_URL
+
+autonomy_tiers:
+  fix:     [retry_with_backoff, cache_invalidation, rate_limit_adjust]
+  propose: [prompt_changes, signal_weight_changes, source_config]     # lands as a PR
+  human:   [anything_touching_send, credentials, deleting_data, retiring_an_agent]

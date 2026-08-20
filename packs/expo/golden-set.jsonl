@@ -1,0 +1,3 @@
+{"org":"expo","verdict":"exclude","why":"first-party; not a prospect","labeled_by":"raven","date":"2026-08-20"}
+{"org":"PLACEHOLDER-showcase-co-1","verdict":"qualified","why":"bootstrap from expo.dev/customers then hand-verify","labeled_by":"raven","date":"2026-08-20"}
+{"org":"PLACEHOLDER-hobby-dev-1","verdict":"unqualified","why":"individual side project; no production signals","labeled_by":"raven","date":"2026-08-20"}

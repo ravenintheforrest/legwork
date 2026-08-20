@@ -3,4 +3,5 @@ dist/
 .env
 *.local
 .DS_Store
-data/cache/
+data/
+briefs/

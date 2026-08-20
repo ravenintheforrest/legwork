@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — fictional org by design",
+  "login": "acme-mobile",
+  "type": "Organization",
+  "name": "Acme Mobile (fictional)",
+  "blog": "",
+  "description": "Fictional org in the legwork fixture set. One customer-facing app, last released in 2024, kept as the negative example.",
+  "html_url": "https://github.com/acme-mobile",
+  "public_repos": 4,
+  "followers": 5,
+  "created_at": "2021-07-01T00:00:00Z"
+}

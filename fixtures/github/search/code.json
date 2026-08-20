@@ -1,0 +1,200 @@
+{
+  "_note": "authored fixture — sample data over real public companies; recorded shape of GET /search/code?q=filename:eas.json",
+  "query": "filename:eas.json expo",
+  "total_count": 12,
+  "incomplete_results": false,
+  "items": [
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/partiful/mobile/blob/main/eas.json",
+      "repository": {
+        "full_name": "partiful/mobile",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/partiful/mobile",
+        "description": "Partiful for iOS and Android",
+        "owner": {
+          "login": "partiful",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/usebounce/bounce-app/blob/main/eas.json",
+      "repository": {
+        "full_name": "usebounce/bounce-app",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/usebounce/bounce-app",
+        "description": "Bounce for iOS and Android",
+        "owner": {
+          "login": "usebounce",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/ongoody/goody-app/blob/main/eas.json",
+      "repository": {
+        "full_name": "ongoody/goody-app",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/ongoody/goody-app",
+        "description": "Goody mobile app",
+        "owner": {
+          "login": "ongoody",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/cameo/cameo-app/blob/main/eas.json",
+      "repository": {
+        "full_name": "cameo/cameo-app",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/cameo/cameo-app",
+        "description": "Cameo mobile app",
+        "owner": {
+          "login": "cameo",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/beatgig/beatgig-mobile/blob/main/eas.json",
+      "repository": {
+        "full_name": "beatgig/beatgig-mobile",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/beatgig/beatgig-mobile",
+        "description": "BeatGig app for artists and bookers",
+        "owner": {
+          "login": "beatgig",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/incident-io/on-call-app/blob/main/eas.json",
+      "repository": {
+        "full_name": "incident-io/on-call-app",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/incident-io/on-call-app",
+        "description": "incident.io On-call for iOS and Android",
+        "owner": {
+          "login": "incident-io",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/brexhq/brex-mobile/blob/main/eas.json",
+      "repository": {
+        "full_name": "brexhq/brex-mobile",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/brexhq/brex-mobile",
+        "description": "Brex mobile app",
+        "owner": {
+          "login": "brexhq",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/joinzoe/zoe-app/blob/main/eas.json",
+      "repository": {
+        "full_name": "joinzoe/zoe-app",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/joinzoe/zoe-app",
+        "description": "ZOE app for iOS and Android",
+        "owner": {
+          "login": "joinzoe",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/infinitered/ignite/blob/main/eas.json",
+      "repository": {
+        "full_name": "infinitered/ignite",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/infinitered/ignite",
+        "description": "Infinite Red's battle-tested React Native boilerplate, active since 2016",
+        "owner": {
+          "login": "infinitered",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/hobbydev-example/expo-todo/blob/main/eas.json",
+      "repository": {
+        "full_name": "hobbydev-example/expo-todo",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/hobbydev-example/expo-todo",
+        "description": "Todo app I am building while learning Expo",
+        "owner": {
+          "login": "hobbydev-example",
+          "type": "User"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "eas.json",
+      "html_url": "https://github.com/acme-mobile/customer-app/blob/main/eas.json",
+      "repository": {
+        "full_name": "acme-mobile/customer-app",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/acme-mobile/customer-app",
+        "description": "Customer app (archived, no longer maintained)",
+        "owner": {
+          "login": "acme-mobile",
+          "type": "Organization"
+        }
+      }
+    },
+    {
+      "name": "eas.json",
+      "path": "templates/expo-template-bare-minimum/eas.json",
+      "html_url": "https://github.com/expo/expo/blob/main/templates/expo-template-bare-minimum/eas.json",
+      "repository": {
+        "full_name": "expo/expo",
+        "private": false,
+        "fork": false,
+        "html_url": "https://github.com/expo/expo",
+        "description": "An open-source framework for making universal native apps with React. Expo runs on Android, iOS, and the web.",
+        "owner": {
+          "login": "expo",
+          "type": "Organization"
+        }
+      }
+    }
+  ]
+}

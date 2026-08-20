@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — sample data",
+  "login": "usebounce",
+  "type": "Organization",
+  "name": "Bounce",
+  "blog": "https://usebounce.com",
+  "description": "Bounce is a network of local shops where travelers can drop off a bag or pick up a package. Booking, directions, and check-in all happen in the app.",
+  "html_url": "https://github.com/usebounce",
+  "public_repos": 14,
+  "followers": 96,
+  "created_at": "2018-03-14T00:00:00Z"
+}

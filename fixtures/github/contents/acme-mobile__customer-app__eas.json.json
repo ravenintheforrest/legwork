@@ -1,0 +1,15 @@
+{
+  "_note": "authored fixture — fictional org by design",
+  "name": "eas.json",
+  "path": "eas.json",
+  "type": "file",
+  "html_url": "https://github.com/acme-mobile/customer-app/blob/main/eas.json",
+  "content": {
+    "cli": {
+      "version": ">= 0.60.0"
+    },
+    "build": {
+      "production": {}
+    }
+  }
+}

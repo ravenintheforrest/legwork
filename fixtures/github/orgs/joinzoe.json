@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — sample data",
+  "login": "joinzoe",
+  "type": "Organization",
+  "name": "ZOE",
+  "blog": "https://joinzoe.com",
+  "description": "ZOE runs at-home gut microbiome and blood sugar tests, then turns the results into daily food scores in the app. Personalized nutrition, scored against metabolic health research.",
+  "html_url": "https://github.com/joinzoe",
+  "public_repos": 16,
+  "followers": 88,
+  "created_at": "2020-02-26T00:00:00Z"
+}

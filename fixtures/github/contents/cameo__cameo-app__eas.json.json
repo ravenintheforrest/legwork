@@ -1,0 +1,15 @@
+{
+  "_note": "authored fixture — sample data",
+  "name": "eas.json",
+  "path": "eas.json",
+  "type": "file",
+  "html_url": "https://github.com/cameo/cameo-app/blob/main/eas.json",
+  "content": {
+    "cli": {
+      "version": ">= 5.9.0"
+    },
+    "build": {
+      "production": {}
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — sample data",
+  "login": "expo",
+  "type": "Organization",
+  "name": "Expo",
+  "blog": "https://expo.dev",
+  "description": "An open-source framework for making universal native apps with React. Expo runs on Android, iOS, and the web.",
+  "html_url": "https://github.com/expo",
+  "public_repos": 220,
+  "followers": 12400,
+  "created_at": "2015-05-27T00:00:00Z"
+}

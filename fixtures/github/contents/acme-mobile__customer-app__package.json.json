@@ -1,0 +1,18 @@
+{
+  "_note": "authored fixture — fictional org by design",
+  "name": "package.json",
+  "path": "package.json",
+  "type": "file",
+  "html_url": "https://github.com/acme-mobile/customer-app/blob/main/package.json",
+  "content": {
+    "name": "acme-customer-app",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+      "expo": "~44.0.6",
+      "react": "17.0.1",
+      "react-native": "0.64.3",
+      "expo-constants": "~13.0.2"
+    }
+  }
+}

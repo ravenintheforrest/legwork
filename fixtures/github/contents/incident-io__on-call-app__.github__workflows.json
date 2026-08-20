@@ -1,0 +1,18 @@
+{
+  "_note": "authored fixture — sample data",
+  "path": ".github/workflows",
+  "type": "dir",
+  "html_url": "https://github.com/incident-io/on-call-app/tree/main/.github/workflows",
+  "entries": [
+    {
+      "name": "eas-build.yml",
+      "path": ".github/workflows/eas-build.yml",
+      "type": "file"
+    },
+    {
+      "name": "test.yml",
+      "path": ".github/workflows/test.yml",
+      "type": "file"
+    }
+  ]
+}

@@ -28,8 +28,8 @@ export function writeConsole(): string {
   const published = accounts.filter((a) => a.stage === "briefed" && (!a.review || a.review.status === "approved")).length;
   const memoCount = existsSync("memos") ? readdirSync("memos").filter((f) => f.endsWith(".md")).length : 0;
   const body = `
-<h1>legwork — fleet console</h1>
-<p class="sub">generated ${generatedAt} from the fleet's own files. The terminal acts; this page shows.</p>
+<div class="top"><span class="brand">legwork</span><h1>Fleet console</h1><span class="spacer"></span><button class="theme" id="theme">dark mode</button></div>
+<p class="sub">Generated ${generatedAt} from the fleet's own files. The terminal acts; this page shows.</p>
 <div class="tabs">
   <button data-tab="overview">overview</button>
   <button data-tab="queue">review queue<span class="count">${queued.length}</span></button>

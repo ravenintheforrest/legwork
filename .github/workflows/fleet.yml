@@ -32,6 +32,9 @@ jobs:
   deploy-console:
     needs: gate-and-console
     if: github.ref == 'refs/heads/main'
+    # Pages needs a public repo (or a paid plan) and Pages enabled with source=GitHub Actions.
+    # Until then this job may fail; it must not mask the gate job's verdict.
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment:
       name: github-pages

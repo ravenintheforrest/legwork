@@ -34,6 +34,11 @@ The harness is the product. Agents are cattle; the registry is the ranch.
 - Boring, readable code; comments only for non-obvious constraints.
 - Every session appends a BUILDLOG.md entry: date, what, why.
 - Demo insurance: `legwork demo` (seeded, deterministic) must always work offline.
+- **Change scoring, signals, or a prompt → re-capture LLM fixtures** (`LEGWORK_LLM=cli
+  legwork demo --capture-llm`). `requestKey` hashes the filled prompt, which carries the
+  qualification decision, so any rescore invalidates every replay fixture at once. The
+  fallback is loud, not silent — but a demo on template briefs is not the demo.
+- Before shipping: `npm test` (73, sealed) and `legwork selftest` (15, offline, ~2s).
 
 ## Commands (target surface)
 `legwork run [--since 7d] [--agent x]` · `legwork status [--costs]` · `legwork evals`

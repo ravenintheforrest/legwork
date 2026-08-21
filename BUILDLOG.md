@@ -122,3 +122,39 @@ One entry per working session: date, what happened, why it went that way.
   https://ravenintheforrest.github.io/legwork/ . CI gate green on every push.
 - `improve brief` captured once on Opus; replays offline (memos/improve/).
 - Coding scope closed. Next: refine/test — rehearsal script + two dress runs.
+
+## 2026-08-21 (afternoon) — the operator desk, the brain, the drawer, and a test suite
+Five parallel Opus workstreams on disjoint files, each verified here before landing.
+
+- **`legwork serve`** — the local operator desk. node:http, no deps, 127.0.0.1 only.
+  Same functions the CLI calls, behind buttons: run the fleet with a streaming log,
+  approve/reject from the queue, retire a unit, re-run evals, send to Slack. Two landmines
+  found and guarded: `runEvals` sets `process.exitCode` on regression (snapshot/restore so
+  a regression reports without poisoning the process), and `runPipeline` calls
+  `process.exit(1)` on a missing GITHUB_TOKEN in live mode (now a 400). Output capture uses
+  AsyncLocalStorage so a concurrent request cannot leak into a run's log.
+- **Served-mode console** — the same renderer; static output stays byte-identical, verified
+  on frozen copies because concurrent runs contaminated the naive diff.
+- **Receipt drawer** — receipts open a right-hand preview instead of a tab
+  (ravenhoward.org interaction). Server-side fetch behind a strict host allowlist with
+  manual redirect-hop checking; refuses 127.0.0.1, 169.254.169.254, credentials-in-URL,
+  and github.com@evil.example.com. Static copy degrades to metadata, zero requests on load.
+- **"How it runs" brain panel** — the fleet's config rendered from the real files, with a
+  "to change this" path per section. Derives deterministic-vs-model by reading each unit's
+  source for `ctx.llm`; detects loop dials by type, not name; two-way drift detection
+  between icp.yaml, the registry, and WEIGHTS. **Caught a real bug on first run**: an
+  unquoted comma in a YAML flow mapping had silently truncated segment D's ICP tell to
+  "one org" and made the rest a junk key. Fixed; swept both configs for the same class.
+- **`discover-jobs`** — HN who-is-hiring channel; a salary attached to Expo/RN is budget and
+  production evidence in one public signal. New `hiring_signal` at 0.10, funded by trimming
+  `eas_json_present` 0.30 → 0.20 (it is already the hard gate, so it was double-counted).
+  All nine eval metrics held at 1.00.
+- **Tests** — 73 node:test tests, no framework dependency, plus `legwork selftest`
+  (15 checks, offline, 1.8s) and `legwork soak`. The suite hashes data/, briefs/, memos/,
+  site/ before and after and fails if a byte moved. The citations-gate test drives the real
+  agent with a fabricated URL and asserts both rejection and that the URL never ships.
+- **Structural finding:** `requestKey` hashes the *filled* prompt, and the brief prompt
+  interpolates `qualification_json` — so any scoring change invalidates every LLM replay
+  fixture at once. Correct behavior (a replay that no longer matches config would be a
+  lie), but it means: **change scoring or prompts → re-capture fixtures.** Done here on Opus.
+- Routing: brief on Opus, frontier reserved.

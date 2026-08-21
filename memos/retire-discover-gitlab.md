@@ -6,12 +6,12 @@ date 2026-08-21 · verdict: **RETIRE**
 public mobile repos on GitLab are rare; expect near-zero marginal contribution.
 
 ## What it cost
-- 18 runs (0 live), 18 ok, 0 failed
-- 1.4s total runtime — 1% of all pipeline time
+- 42 runs (3 live), 42 ok, 0 failed
+- 1.4s total runtime — 0% of all pipeline time
 - $0.0000 in model spend
 
 ## What it produced
-- 37 records emitted across all runs
+- 174 records emitted across all runs
 - 1 account carry its evidence (1 evidence record)
 - 1 account exists *only* because of it: mika-hobbyist
 

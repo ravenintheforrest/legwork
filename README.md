@@ -29,13 +29,14 @@ means writing a new pack (`packs/`), not new code.
 
 ```bash
 npm install
-npx tsx src/cli.ts demo           # full pipeline over recorded fixtures, offline, deterministic
-npx tsx src/cli.ts report --open  # the fleet console: health, costs, evals, queue, briefs, memos
-npx tsx src/cli.ts status --costs
-npx tsx src/cli.ts show partiful
-npx tsx src/cli.ts review --html  # judge briefs in the browser; record decisions via the CLI
-npx tsx src/cli.ts evals          # score every unit against the hand-labeled golden set
+npx tsx src/cli.ts demo       # full pipeline over recorded fixtures, offline, deterministic
+npx tsx src/cli.ts serve      # the operator desk on localhost — run, review, retire, evals
+npx tsx src/cli.ts selftest   # 15 end-to-end checks, offline, ~2s
+npm test                      # 73 tests; proves it never touched your data
 ```
+
+Everything the desk does is also a verb: `status --costs`, `show <account>`,
+`review --stats`, `evals`, `retire <unit>`, `improve <unit>`, `report`, `notify <org>`.
 
 Demo mode replays **real captured model output** from fixtures — authentic and
 byte-identical on every run. Live mode needs a `GITHUB_TOKEN`; model briefs need an
@@ -104,14 +105,32 @@ Then ask Claude "what did the fleet find this week?" and it answers from
 
 ## Surfaces — terminal operates, browser shows, Slack delivers
 
-- **CLI** is the operator's cockpit and the only thing that acts: runs, reviews, retirements.
-- **The console** (`legwork report`) is a static page regenerated from the fleet's own
-  files — unit health with silent-fails made loud (a red dot is a unit whose last run did
-  not finish), spend, eval baseline, the review queue with staging buttons, published
-  briefs, retirement memos, run log. CI rebuilds and publishes it on every push.
+- **CLI** is the operator's cockpit and always works: runs, reviews, retirements.
+- **`legwork serve`** is the local operator desk — the same functions behind buttons, on
+  `127.0.0.1` only. Run the fleet and watch the log stream, approve or reject from the
+  queue, retire a unit, re-run evals. A second client, not a second control plane.
+- **The console** (`legwork report`) is that same page rendered static — the public,
+  read-only copy CI publishes to Pages on every push. Unit health with silent fails made
+  loud (a red dot is a unit whose last run did not finish), spend, eval baseline, review
+  queue, published briefs, retirement memos, run log, and **how it runs**.
+- **Receipts open in a drawer, not a tab.** Click any `[source]` and the source previews
+  in place: a GitHub receipt shows the actual `eas.json`, a profile shows the real bio, an
+  App Store link shows ratings and last release. Served mode fetches through a strict host
+  allowlist (never an open proxy); the static copy degrades to metadata and makes zero
+  network requests on load.
 - **Slack** is the consumer surface: a brief that clears the gate or gets approved posts
   its short form to an incoming webhook (`legwork notify`, or automatically on approve).
   Without a webhook it prints what it would have sent — never a silent no-op.
+
+### "How it runs" — config as the control surface
+The console's last tab renders the fleet's own configuration: every unit with its resolved
+model, cost ceiling, and autonomy tier (and whether it is deterministic code or calls a
+model — derived from the source, not a hand-kept list); the autonomy tiers as three
+columns; the loops and their tuning dials; the ICP signals as weighted bars that shout if
+they stop summing to 1.00; the prompts with their version hashes; the golden set's
+composition. Every section ends with the exact file and path to change it. On its first
+run it caught a real bug: an unquoted comma had silently truncated an ICP segment
+description in the YAML.
 
 Decisions staged in the browser become one CLI command you paste. That keeps one control
 plane, and it keeps the answer to "what is the system allowed to do on its own?" in a file
@@ -125,6 +144,15 @@ That is the honest ceiling of outside-in data. Inside a company, the same harnes
 at product telemetry, billing events, and CRM stages through the adapter layer
 (`sources` in `registry.yaml`): the discovery inputs change; the evaluation, review,
 cost, and retirement architecture is the part that stays.
+
+## Tests
+
+`npm test` runs 73 tests on `node:test` with no test framework installed. They hash
+`data/`, `briefs/`, `memos/`, and `site/` before and after the run and fail if a single
+byte moved — a test suite that eats your demo state is worse than none. The most important
+one drives the real brief agent with a fabricated URL and asserts the citations gate
+rejects it *and* that the URL never appears in any published brief. `legwork selftest` is
+the fast subset: 15 checks, offline, no credentials, under two seconds.
 
 ## Roadmap
 

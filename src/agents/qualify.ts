@@ -57,7 +57,7 @@ export const qualify: AgentDef = {
       // A person's side project never becomes an account, and never carries more
       // confidence than a person's side project deserves.
       const confidence = round2(isUser ? Math.min(weighted, 0.25) : weighted);
-      const qualification = decisionFor(signals, confidence, qualified, isUser);
+      const qualification = decisionFor(signals, round2(weighted), qualified, isUser);
 
       // Re-scoring replaces this agent's own receipts; everyone else's carry forward.
       const carried = account.evidence.filter((e) => e.agent !== "qualify");

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { Command } from "commander";
 import { PIPELINE } from "./agents/index.js";
 import { runEvals } from "./evals.js";
+import { runImprove } from "./improve.js";
 import { readRuns } from "./runlog.js";
 import { loadAccounts } from "./store.js";
 import { runPipeline, type RunSummary } from "./runner.js";
@@ -88,7 +89,12 @@ program.command("review").description("approve/reject queued briefs (HITL loop)"
     await runReview(options);
   });
 program.command("doctor").description("diagnose a failing run (self-heal loop)").argument("[run]").action(todo("doctor"));
-program.command("improve").description("draft a prompt/rubric revision as a PR").argument("<agent>").action(todo("improve"));
+program.command("improve").description("draft a prompt/rubric revision as a PR").argument("<agent>")
+  .option("--fixture", "replay a recorded model response instead of calling live")
+  .option("--capture-llm", "call the live model once and record the replay fixture")
+  .action(async (agent: string, options: { fixture?: boolean; captureLlm?: boolean }) => {
+    await runImprove(agent, { fixture: options.fixture === true, captureLlm: options.captureLlm === true });
+  });
 program.command("retire").description("retirement memo for one agent, from its run history").argument("<agent>")
   .action((agent: string) => {
     runRetire(agent);

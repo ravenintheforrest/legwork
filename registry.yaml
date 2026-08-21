@@ -28,6 +28,9 @@ agents:
     does: company facts — what they do, size signals, careers page
     sources: [public_web]
     output: accounts.jsonl
+  dedupe:
+    does: reconcile duplicate orgs/domains, flag low-confidence records
+    output: accounts.jsonl
   qualify:
     does: score production usage and segment (A mobile-first / B app-as-channel / C JS-forward org / D agency)
     signals: [eas_json, store_links, ci_config, rn_version_recency, repo_activity, store_review_volume, store_update_cadence]
@@ -36,9 +39,6 @@ agents:
     does: recent signals — EAS/build issues, upgrade PRs, RN job posts
     sources: [github_issues, careers_pages, hn_algolia]
     output: signals.jsonl
-  dedupe:
-    does: reconcile duplicate orgs/domains, flag low-confidence records
-    output: accounts.jsonl
   people:
     does: who to talk to — top contributors to the Expo repo and their public profiles
     sources: [github_contributors, github_users]

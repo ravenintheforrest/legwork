@@ -54,14 +54,14 @@ function card(a: Account): string {
     <span class="verdict" data-state="undecided">undecided</span>
   </header>
   <div class="cols">
-    <div class="col">
-      <h3>Score math</h3>
+    <div class="col brief">${mdToHtml(brief)}</div>
+    <div class="col why">
+      <h3>Why this score</h3>
       <table><tr><th>signal</th><th>value × weight</th><th>adds</th><th>source</th></tr>${signals}</table>
-      <h3>Assumptions — where the model admits what it doesn't know</h3>
+      <h3>Assumptions — what the model admits it doesn't know</h3>
       <ul>${assumptions || "<li>none recorded</li>"}</ul>
       ${q?.fallback ? `<p class="fallback">Fallback: ${esc(q.fallback)}</p>` : ""}
     </div>
-    <div class="col brief">${mdToHtml(brief)}</div>
   </div>
   <footer>
     <button data-act="approve">approve</button>
@@ -107,7 +107,19 @@ export function stageScript(): string {
   if (copy) copy.addEventListener("click", () => {
     navigator.clipboard.writeText(document.getElementById("cmd").textContent);
   });
-  paint();`;
+  paint();
+  // tabs: hash-linked so #queue etc. deep-link; no tabs present on single-section pages
+  const tabs = document.querySelectorAll(".tabs button");
+  if (tabs.length) {
+    const show = (id) => {
+      document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === id));
+      tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === id));
+      history.replaceState(null, "", "#" + id);
+    };
+    tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.tab)));
+    const initial = location.hash.slice(1);
+    show(document.getElementById(initial) && document.getElementById(initial).classList.contains("panel") ? initial : tabs[0].dataset.tab);
+  }`;
 }
 
 // Just enough markdown for our own briefs and memos: headings, bullets, links, bold, code, quotes.
@@ -157,9 +169,14 @@ export function shell(title: string, body: string, script = ""): string {
   body { background:var(--bg); color:var(--text); font:15px/1.55 "JetBrains Mono", ui-monospace, Menlo, monospace; padding:24px; max-width:1280px; margin:0 auto; }
   h1 { font-size:18px; margin-bottom:4px; }
   .sub { color:var(--dim); margin-bottom:20px; font-size:13px; }
-  nav { display:flex; gap:16px; font-size:12.5px; margin:10px 0 26px; flex-wrap:wrap; }
-  nav a { color:var(--dim); text-decoration:none; border-bottom:1px solid transparent; }
-  nav a:hover { color:var(--text); border-color:var(--dim); }
+  /* tabs: one thing on screen at a time */
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; margin:18px 0 24px; border-bottom:1px solid var(--line); padding-bottom:10px; }
+  .tabs button { background:transparent; border:1px solid transparent; color:var(--dim); padding:7px 14px; border-radius:6px; font:inherit; font-size:13px; cursor:pointer; }
+  .tabs button:hover { color:var(--text); border-color:var(--line); }
+  .tabs button.active { color:var(--text); background:var(--card); border-color:var(--line); }
+  .tabs .count { color:var(--dim); margin-left:6px; font-size:11px; }
+  .panel { display:none; } .panel.active { display:block; }
+  .panel > .lead { color:var(--dim); font-size:13px; margin-bottom:18px; max-width:760px; }
   section.block { margin-bottom:34px; }
   section.block > h2 { font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
   .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:18px; }
@@ -169,7 +186,8 @@ export function shell(title: string, body: string, script = ""): string {
   .verdict { margin-left:auto; font-size:12px; padding:2px 10px; border:1px solid var(--line); border-radius:99px; color:var(--dim); }
   .verdict[data-state="approve"] { color:var(--ok); border-color:var(--ok); }
   .verdict[data-state="reject"] { color:var(--no); border-color:var(--no); }
-  .cols { display:grid; grid-template-columns: minmax(280px, 4fr) 6fr; gap:20px; }
+  .cols { display:grid; grid-template-columns: 6fr minmax(280px, 4fr); gap:28px; }
+  .why { border-left:1px solid var(--line); padding-left:20px; }
   @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
   h3 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:14px 0 6px; }
   table { border-collapse:collapse; width:100%; font-size:12.5px; }
@@ -180,7 +198,7 @@ export function shell(title: string, body: string, script = ""): string {
   li { margin:3px 0; }
   a { color:#8ab4d8; }
   .fallback { color:var(--dim); font-size:12.5px; margin-top:8px; }
-  .brief { border-left:1px solid var(--line); padding-left:20px; font-size:13.5px; }
+  .brief { font-size:13.5px; }
   .brief h2, .memo h2 { font-size:15px; margin:6px 0; }
   .brief h3, .memo h3 { text-transform:none; letter-spacing:0; color:var(--text); font-size:13px; margin-top:12px; }
   blockquote { color:var(--dim); border-left:2px solid var(--line); padding-left:10px; margin:6px 0; }

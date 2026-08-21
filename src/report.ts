@@ -25,21 +25,52 @@ export function writeConsole(): string {
   const queued = accounts.filter((a) => a.review?.status === "queued");
   const generatedAt = new Date().toISOString().replace("T", " ").slice(0, 16) + "Z";
 
+  const published = accounts.filter((a) => a.stage === "briefed" && (!a.review || a.review.status === "approved")).length;
+  const memoCount = existsSync("memos") ? readdirSync("memos").filter((f) => f.endsWith(".md")).length : 0;
   const body = `
 <h1>legwork — fleet console</h1>
-<p class="sub">static view generated ${generatedAt} from data/runs.jsonl, data/accounts.jsonl, briefs/, memos/. The terminal acts; this page shows.</p>
-<nav>
-  <a href="#fleet">fleet</a><a href="#evals">evals</a><a href="#queue">review queue (${queued.length})</a>
-  <a href="#briefs">published briefs</a><a href="#memos">retirement memos</a><a href="#runs">run log</a>
-</nav>
-${fleetSection(registry.agents, runs, accounts, reviews)}
-${evalsSection(registry.pack)}
-<section class="block" id="queue"><h2>Review queue — judge here, record via the command bar</h2>${renderQueueCards(queued)}</section>
-${briefsSection(accounts)}
-${memosSection()}
-${runsSection(runs)}
-${stageBar()}
-<footer class="page">legwork · <a href="https://github.com/ravenintheforrest/legwork">repo</a> · every number above is recomputed from files on each generation; nothing is cached in this page.</footer>`;
+<p class="sub">generated ${generatedAt} from the fleet's own files. The terminal acts; this page shows.</p>
+<div class="tabs">
+  <button data-tab="overview">overview</button>
+  <button data-tab="queue">review queue<span class="count">${queued.length}</span></button>
+  <button data-tab="briefs">published briefs<span class="count">${published}</span></button>
+  <button data-tab="evals">evals</button>
+  <button data-tab="memos">retirement memos<span class="count">${memoCount}</span></button>
+  <button data-tab="runs">run log<span class="count">${runs.length}</span></button>
+</div>
+
+<div class="panel" id="overview">
+  <p class="lead">Is the fleet healthy, what is it costing, and is anyone waiting on a human? A red dot is a unit whose last run did not finish — the silent-fail case, made loud.</p>
+  ${fleetSection(registry.agents, runs, accounts, reviews)}
+</div>
+
+<div class="panel" id="queue">
+  <p class="lead">Briefs below the confidence gate, waiting for a person. Read the brief, then the score math and the assumptions beside it — the assumptions are where you calibrate. Approve or reject stages a decision; the command bar records it through the CLI.</p>
+  ${renderQueueCards(queued)}
+  ${stageBar()}
+</div>
+
+<div class="panel" id="briefs">
+  <p class="lead">Briefs that cleared the gate or were approved. Every sentence carries its source.</p>
+  ${briefsSection(accounts)}
+</div>
+
+<div class="panel" id="evals">
+  <p class="lead">Every unit is scored against the hand-labeled golden set on each run; a score below this baseline fails CI.</p>
+  ${evalsSection(registry.pack)}
+</div>
+
+<div class="panel" id="memos">
+  <p class="lead">Units judged on their own run history: what was expected, what it cost, what only it produced, and the verdict.</p>
+  ${memosSection()}
+</div>
+
+<div class="panel" id="runs">
+  <p class="lead">The last 25 runs, newest first. Mode, outcome, in→out, time, spend, and the compact error if any.</p>
+  ${runsSection(runs)}
+</div>
+
+<footer class="page">legwork · <a href="https://github.com/ravenintheforrest/legwork">repo</a> · recomputed from files on each generation; nothing is cached in this page.</footer>`;
 
   mkdirSync(SITE_DIR, { recursive: true });
   const file = join(SITE_DIR, "index.html");
@@ -92,7 +123,7 @@ function fleetSection(
   <div class="kpi"><div class="v">${acceptance}</div><div class="k">review acceptance (${reviews.length} decisions)</div></div>
 </div>
 <table><tr><th>unit</th><th>does</th><th>runs</th><th>failed</th><th>last run</th><th>last outcome</th><th>spend</th></tr>${rows}</table>
-<p class="sub" style="margin-top:8px">A red dot is a unit whose most recent run did not finish — the silent-fail case, made loud. Amber: last run ok, but it has failed before.</p>
+<p class="sub" style="margin-top:8px">Amber: last run ok, but it has failed before.</p>
 </section>`;
 }
 
@@ -105,7 +136,6 @@ function evalsSection(pack: string): string {
     .join("");
   return `<section class="block" id="evals"><h2>Evals — the regression gate's baseline</h2>
 <table><tr><th>metric</th><th>baseline</th></tr>${rows}</table>
-<p class="sub" style="margin-top:8px">Every unit is scored against the hand-labeled golden set on each <code>legwork evals</code>; a score below this baseline exits non-zero and fails CI.</p>
 </section>`;
 }
 

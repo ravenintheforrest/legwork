@@ -228,7 +228,7 @@ function renderDecisionSection(account: Account): string[] {
   const decision = account.qualification;
   if (!decision) return [];
 
-  const comparison = decision.qualified ? "meets" : "does not meet";
+  const comparison = decision.score >= decision.threshold ? "meets" : "does not meet";
   const lines = [
     "## Why this score",
     `${decision.score.toFixed(2)} ${comparison} the ${decision.threshold.toFixed(2)} qualification threshold. ` +

@@ -4,5 +4,6 @@
   "enrich_presence": 1,
   "qualify_verdict": 1,
   "qualify_segment": 1,
-  "dedupe_domains": 1
+  "dedupe_domains": 1,
+  "qualify_explanation": 1
 }

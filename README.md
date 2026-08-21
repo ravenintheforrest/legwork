@@ -78,6 +78,24 @@ legwork treats that as the product:
 - **Loud failure** — a unit that can't reach its model or fixture says so on stderr and
   records why in the decision record. Silent degradation is the failure mode this whole
   design is against.
+- **The fleet PRs itself** — `legwork improve brief` reads the fleet's own operating
+  record (human review decisions, citations-gate rejections), has the model draft a
+  prompt revision, and writes a PR-shaped memo plus the proposed file. A structural gate
+  rejects any revision that drops a placeholder or a section — rejected means nothing
+  written, never silently repaired. It runs no git command: `propose` tier means a human
+  lands the PR and the evals gate decides.
+
+## Ask the fleet (MCP)
+
+The harness verbs double as MCP tools — `fleet_findings`, `fleet_status`, `account_show`,
+`brief_read`, `review_queue` — served read-only over stdio:
+
+```bash
+claude mcp add legwork -- npx tsx src/mcp.ts
+```
+
+Then ask Claude "what did the fleet find this week?" and it answers from
+`data/accounts.jsonl` with the receipts attached.
 
 ## What changes with first-party data
 
@@ -93,7 +111,6 @@ cost, and retirement architecture is the part that stays.
 - `legwork doctor` — bounded self-diagnosis from a failed run's compact error (propose-only)
 - Outcome ingestion — HubSpot stage adapter joining briefs to pipeline results
 - Static status report rendered from `data/runs.jsonl`
-- MCP server — legwork's functions are MCP-shaped by design (thin wrapper over the CLI verbs)
 
 ## Repo map
 

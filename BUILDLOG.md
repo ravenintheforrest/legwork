@@ -2,6 +2,14 @@
 
 One entry per working session: date, what happened, why it went that way.
 
+## 2026-08-20 — init
+- Name: **legwork** ("the fleet does the legwork"). CLI binary: `legwork`.
+- Architecture locked before code: harness owns the loops, agents stay dumb; loops are registry entries with autonomy tiers (fix/propose/human).
+- 12-Factor Agents review done. Adopted: stateless-reducer agents (F12), unified account state (F5), errors-compact-into-context for `doctor` (F9), prompts as owned versioned files (F2). Already aligned: small focused agents (F10), harness owns control flow (F8), HITL as tool call (F7).
+- Fixtures = authored sample data over real public companies; adapters = the live path. Never shared accounts, only env vars.
+- Hosting: GitHub-native (Actions cron + Pages). Cloudflare Workers documented as the production webhook path, not built.
+- Research phase artifacts live in the vault hub (fleet-hub-base.html): philosophy from 12 sources, Expo intel, channel map, ICP.
+
 ## 2026-08-20 — harness core + discover/resolve/qualify/brief + evals (priority stack 1–4)
 - Harness first, per rule 1: registry loader (zod, strict on agent entries so typos fail
   loud), sequential runner with retries + per-run cost ceiling kill, JSONL run log with
@@ -29,14 +37,6 @@ One entry per working session: date, what happened, why it went that way.
 - Built by two parallel implementation agents (code / fixtures) against one written spec;
   scoring cross-checked independently by both before integration, then verified end to end
   (tsc clean, demo determinism diff, eval gate exercised both ways).
-
-## 2026-08-20 — init
-- Name: **legwork** ("the fleet does the legwork"). CLI binary: `legwork`.
-- Architecture locked before code: harness owns the loops, agents stay dumb; loops are registry entries with autonomy tiers (fix/propose/human).
-- 12-Factor Agents review done. Adopted: stateless-reducer agents (F12), unified account state (F5), errors-compact-into-context for `doctor` (F9), prompts as owned versioned files (F2). Already aligned: small focused agents (F10), harness owns control flow (F8), HITL as tool call (F7).
-- Fixtures = authored sample data over real public companies; adapters = the live path. Never shared accounts, only env vars.
-- Hosting: GitHub-native (Actions cron + Pages). Cloudflare Workers documented as the production webhook path, not built.
-- Research phase artifacts live in the vault hub (fleet-hub-base.html): philosophy from 12 sources, Expo intel, channel map, ICP.
 
 ## 2026-08-20 — steps 5–6, live mode proven
 - HITL review loop: confidence gate (registry `loops.review.confidence_gate: 0.80`) routes
@@ -77,3 +77,31 @@ One entry per working session: date, what happened, why it went that way.
   over real evidence, all receipts resolve 200, all passed the citations gate, all queued
   below the 0.80 confidence gate — real content for the review-queue demo beat.
 - Remaining before Monday: rehearsal script + two dress runs; MCP stub only if stable.
+
+## 2026-08-21 — coding scope closed: improve, MCP, receipt dedupe (three parallel builds)
+- `legwork improve <agent>`: reads the fleet's own operating record (review decisions,
+  citations-gate rejections — compact, capped, deterministically sorted so the replay
+  fixture key is stable), asks the model for a prompt revision via the same provider
+  stack as brief, and writes a PR-shaped memo + proposed file to memos/improve/. A
+  structural gate rejects revisions that drop placeholders or sections — rejected means
+  nothing written. No git/gh execution: `propose` tier lands by human push, and every
+  call (including rejected ones) logs tokens + $ to the run log.
+- MCP server (src/mcp.ts + src/fleetdata.ts): five read-only tools over the same flat
+  files the CLI reads — fleet_findings / fleet_status / account_show / brief_read /
+  review_queue. Register: `claude mcp add legwork -- npx tsx src/mcp.ts` (never
+  `npm run mcp` as the client command — npm's banner corrupts the stdio protocol).
+  Paths resolve against the repo root, so clients can spawn it from anywhere. Proven
+  read-only by hashing data/ + briefs/ before and after a full client session.
+- Brief receipt dedupe (the live-run refine item): the dedupe key canonicalizes GitHub
+  blob/tree URLs, so the same eas.json cited at a branch ref and a commit-sha ref
+  renders once; the store's two-claims-one-URL pair still renders twice.
+- Determinism hardened: replay-provider latency_ms pinned to 0, so decision.json is now
+  byte-identical across demo runs too (was the last source of jitter). registry.yaml
+  agent order aligned with the actual pipeline (dedupe before qualify).
+- doctor / report / outcome ingestion stay cut per the council verdict — README roadmap.
+- Still to capture in the test phase: one live `legwork improve brief --capture-llm`
+  response, so demo-mode improve replays like the briefs do.
+- Built by three parallel implementation agents against one written spec, verified
+  end to end afterward: tsc clean, evals 7/7 at 1.00, demo byte-identical including
+  decision records, improve's refusal/replay-miss/gate paths exercised, MCP smoke
+  client run against demo data. Coding scope is closed; next phase is refine/test.

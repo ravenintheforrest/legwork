@@ -127,7 +127,9 @@ async function modelBrief(
       model,
       provider: ctx.llm.kind,
       promptVersion,
-      latencyMs: Date.now() - startedAt,
+      // Replay is a file read; its sub-millisecond timing jitter (0 vs 1) was the one
+      // thing keeping decision.json from being byte-deterministic in demo mode.
+      latencyMs: ctx.llm.kind === "replay" ? 0 : Date.now() - startedAt,
     };
   } catch (err) {
     // Missing replay fixture or provider failure: the template path is the fallback,
@@ -345,7 +347,13 @@ function groupEvidence(evidence: Evidence[]): EvidenceGroups {
     ...evidence.filter((e) => e.agent !== "qualify" && !COMPANY_AGENTS.has(e.agent)),
   ];
   for (const e of ordered) {
-    const key = `${e.claim}|${e.url}`;
+    // Same fact, two refs: discover's code-search hit cites
+    // github.com/o/r/blob/<sha>/eas.json while qualify's contents URL cites
+    // github.com/o/r/blob/main/eas.json. Canonicalizing the URL for the key alone
+    // collapses that pair; the claim stays in the key, so the store's ratings and
+    // cadence receipts (two claims, one URL) both still render. First seen wins and
+    // renders its ORIGINAL url.
+    const key = `${e.claim}|${canonicalReceiptUrl(e.url)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     if (e.agent === "intent") groups.whyNow.push(e);
@@ -354,6 +362,22 @@ function groupEvidence(evidence: Evidence[]): EvidenceGroups {
     else groups.signals.push(e);
   }
   return groups;
+}
+
+// Dedupe key helper: collapses github blob/tree ref variants
+// (https://github.com/<owner>/<repo>/(blob|tree)/<ref>/<path> → github.com/<owner>/<repo>/<path>)
+// and nothing else — any other URL comes back exactly as given. Never used for display:
+// the citations gate (validateModelBrief) and the model both work off raw evidence URLs.
+function canonicalReceiptUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.replace(/^www\./, "") !== "github.com") return url;
+    const [owner, repo, kind, , ...path] = parsed.pathname.split("/").filter(Boolean);
+    if ((kind !== "blob" && kind !== "tree") || path.length === 0) return url;
+    return `github.com/${owner}/${repo}/${path.join("/")}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url;
+  }
 }
 
 function isStore(e: Evidence): boolean {

@@ -55,3 +55,12 @@ One entry per working session: date, what happened, why it went that way.
   30-day public-GitHub discovery skews hobbyist, confirming the channel-map thesis that
   production Expo lives in private repos / other channels. Receipts spot-checked: all 200.
 - Refine list: evidence-level dedupe in briefs (same eas.json cited at branch + sha URL).
+
+## 2026-08-20 (evening) — council verdict on final scope
+- 5-advisor council + anonymized peer review run on the Codex feedback + scope question.
+- Verdict: (a) wire real LLM calls fused with (g) honest agent-vs-unit reframe = the one
+  integrity item, first; (b) retirement memo = highest-leverage differentiator; (h) README
+  concrete-first + two rehearsals = deliverable, not polish; MCP = README stub, build only
+  if Sunday is boring-stable; CUT status report, doctor, synthetic outcomes to next-steps.
+- New from peer review: cache-replay demo mode (authentic + unbreakable), regression gate
+  must be recalibrated against model output, show the gate catching something as the climax.

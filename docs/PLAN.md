@@ -11,7 +11,33 @@ Expo in production? Public data only (CIIAA clean lane).
     discover → resolve → enrich → qualify → intent → brief
                     ↘ dedupe / quality ↙
 
-## Priority stack (not a calendar)
+## Priority stack — REVISED by council verdict 2026-08-20 (supersedes list below)
+
+1. **(a)+(g) as one integrity item — Thu night/Fri.** Wire real Claude calls into `brief`
+   (+ ambiguity escalation in qualify where cheap) AND reframe docs honestly: deterministic
+   units vs reasoning agents. Zero-LLM-calls is a fatal discovery risk with this reviewer.
+   Get ONE real model-written brief generated tonight.
+2. **Cache-replay demo mode (new, from council):** record real LLM outputs into the cache;
+   demo mode replays them — the demo becomes simultaneously authentic AND unbreakable.
+   Recalibrate the golden set/regression gate against model output so the gate gates something.
+   Budget prompt iteration for brief QUALITY, not just plumbing — a mediocre model brief is
+   worse than a good template one.
+3. **(b) `legwork retire` — Sat AM.** Memo from real run data (gitlab: 20 candidates, 0 briefed,
+   cost share, unique contribution, keep/modify/merge/retire verdict). The council's consensus
+   sleeper: nobody demos killing an agent.
+4. **(h) as a build item, across days.** README rewritten concrete-first (a real company, its
+   evidence, its brief — before any architecture vocabulary). Two full dress rehearsals.
+   Rehearse the failure paths. Recorded-run fallback as insurance.
+5. **(e) MCP — README stub now, build ONLY if Sunday noon is boring-stable.** One line:
+   "aiden-mcp taught me X; legwork's functions are MCP-shaped by design." Captures the
+   callback at 5% of the risk.
+6. **Demo climax (new):** show the gate CATCHING something live — the tampered-baseline
+   regression exit or a queued low-confidence brief — the harness proving it operates.
+CUT to README next-steps (10 min of writing, not 7h of building): (c) status report,
+(d) doctor self-heal, (f) synthetic outcome metrics. (d)/(f) are the interviewer's own
+territory; imitation invites losing comparisons.
+
+## Original priority stack (superseded, kept for history)
 1. **Harness core**: registry loader, runner (concurrency/retry/cache), JSONL run log w/ cost.
 2. **discover + resolve** on GitHub; accounts.jsonl state model.
 3. **Evals**: golden set (bootstrap from Expo showcase + hand-verify), regression gate.

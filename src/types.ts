@@ -68,6 +68,7 @@ export interface RunRecord {
   tokens_in: number;
   tokens_out: number;
   cost_usd: number;
+  mode?: "live" | "fixture"; // absent on records from before this field existed
   outcome: "ok" | "error" | "killed_cost_ceiling";
   error?: string;              // compact — this is what `doctor` reads (F9)
 }

@@ -134,6 +134,7 @@ export async function runPipeline(opts: RunOptions): Promise<RunSummary> {
       tokens_in: costs.tokensIn,
       tokens_out: costs.tokensOut,
       cost_usd: Number(costs.costUsd.toFixed(6)),
+      mode: opts.mode,
       outcome,
       ...(error ? { error } : {}),
     };

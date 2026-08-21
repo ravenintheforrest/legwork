@@ -9,6 +9,7 @@ import { readRuns } from "./runlog.js";
 import { loadAccounts } from "./store.js";
 import { runPipeline, type RunSummary } from "./runner.js";
 import { runReview } from "./review.js";
+import { runRetire } from "./retire.js";
 import type { Account, RunRecord } from "./types.js";
 
 const ACCOUNTS_FILE = "data/accounts.jsonl";
@@ -77,7 +78,10 @@ program.command("review").description("approve/reject queued briefs (HITL loop)"
   });
 program.command("doctor").description("diagnose a failing run (self-heal loop)").argument("[run]").action(todo("doctor"));
 program.command("improve").description("draft a prompt/rubric revision as a PR").argument("<agent>").action(todo("improve"));
-program.command("retire").description("generate a retirement post-mortem").argument("<agent>").action(todo("retire"));
+program.command("retire").description("retirement memo for one agent, from its run history").argument("<agent>")
+  .action((agent: string) => {
+    runRetire(agent);
+  });
 program.command("report").description("generate the static status report").action(todo("report"));
 
 program.parseAsync().catch((err: unknown) => {

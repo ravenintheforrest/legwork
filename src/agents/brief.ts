@@ -29,13 +29,28 @@ export const brief: AgentDef = {
     const out: Account[] = [];
 
     for (const account of queue) {
-      const body = (await modelBrief(account, ctx, segmentNames)) ?? renderBrief(account, ctx, segmentNames);
+      const modelBody = await modelBrief(account, ctx, segmentNames);
+      const briefMode = modelBody ? "model" : "template";
+      const body = modelBody ?? renderBrief(account, ctx, segmentNames);
       // HITL gate: confidence below the registry bar queues for a human (F7);
       // at or above it, the brief publishes directly.
       const queued = (account.confidence ?? 0) < gate;
       const dir = queued ? join(BRIEFS_DIR, "queue") : BRIEFS_DIR;
       writeFileSync(join(dir, `${account.org}.md`), body);
       writeFileSync(join(dir, `${account.org}.slack.txt`), renderSlack(account, segmentNames, ctx.mode));
+      writeFileSync(
+        join(dir, `${account.org}.decision.json`),
+        JSON.stringify(
+          {
+            org: account.org,
+            brief_mode: briefMode,
+            review_gate: gate,
+            qualification: account.qualification ?? null,
+          },
+          null,
+          2,
+        ) + "\n",
+      );
       out.push({
         ...account,
         stage: "briefed",
@@ -67,12 +82,13 @@ async function modelBrief(
     segment_name: segmentNames[account.segment ?? ""] ?? "",
     confidence: (account.confidence ?? 0).toFixed(2),
     evidence_json: JSON.stringify(account.evidence),
+    qualification_json: JSON.stringify(account.qualification ?? null),
   });
 
   const model = effective(loadRegistry(), "brief").model;
   const response = await ctx.llm.complete({ model, system, prompt: filled, maxTokens: 1200 });
   ctx.costs.charge(model, response.tokens_in, response.tokens_out);
-  return response.text;
+  return injectDecisionSection(response.text, account);
 }
 
 function parsePrompt(source: string): { system: string; user: string } {
@@ -106,6 +122,8 @@ function renderBrief(account: Account, ctx: RunContext, segmentNames: Record<str
   if (ctx.mode === "fixture") {
     lines.push("> **FIXTURE DATA** — authored sample evidence; source links may not resolve.", "> Run `legwork run` (live mode) for real receipts.", "");
   }
+
+  lines.push(...renderDecisionSection(account), "");
 
   lines.push("## Production Expo signals");
   for (const e of groups.signals) lines.push(bullet(e));
@@ -174,15 +192,65 @@ function renderSlack(account: Account, segmentNames: Record<string, string>, mod
   const groups = groupEvidence(account.evidence);
   const segment = account.segment ?? "";
   const name = segmentNames[segment];
+  const action = account.qualification?.action ?? "unknown";
   const header =
     `*${company}* — segment ${segment}${name ? ` (${name})` : ""}, ` +
-    `confidence ${(account.confidence ?? 0).toFixed(2)}`;
+    `confidence ${(account.confidence ?? 0).toFixed(2)} · action ${action}`;
 
-  const strongest = [...groups.signals, ...groups.store, ...groups.whyNow, ...groups.company].slice(0, MAX_SLACK_BULLETS);
+  const scoreReasons = [...(account.qualification?.signals ?? [])]
+    .filter((signal) => signal.contribution > 0)
+    .sort((a, b) => b.contribution - a.contribution)
+    .slice(0, 3)
+    .map(
+      (signal) =>
+        `• score +${signal.contribution.toFixed(2)}: ${signal.name} ` +
+        `(${signal.value.toFixed(2)} × ${signal.weight.toFixed(2)})` +
+        (signal.evidence_url ? ` ${signal.evidence_url}` : ""),
+    );
+  const strongest = [...groups.signals, ...groups.store, ...groups.whyNow, ...groups.company].slice(
+    0,
+    Math.max(0, MAX_SLACK_BULLETS - scoreReasons.length),
+  );
   const bullets = strongest.map((e) => `• ${e.claim} (${e.url})`);
 
   const banner = mode === "fixture" ? ["[FIXTURE DATA — sample evidence, links may not resolve]"] : [];
-  return [...banner, header, ...bullets, `full brief: briefs/${account.org}.md`, ""].join("\n");
+  return [...banner, header, ...scoreReasons, ...bullets, `full brief: briefs/${account.org}.md`, ""].join("\n");
+}
+
+function injectDecisionSection(body: string, account: Account): string {
+  const section = renderDecisionSection(account);
+  if (section.length === 0) return body;
+  const [title, ...rest] = body.trim().split("\n");
+  return [title ?? "", "", ...section, "", ...rest].join("\n").trim() + "\n";
+}
+
+function renderDecisionSection(account: Account): string[] {
+  const decision = account.qualification;
+  if (!decision) return [];
+
+  const comparison = decision.score >= decision.threshold ? "meets" : "does not meet";
+  const lines = [
+    "## Why this score",
+    `${decision.score.toFixed(2)} ${comparison} the ${decision.threshold.toFixed(2)} qualification threshold. ` +
+      `Proposed action: **${decision.action}**.`,
+    "",
+  ];
+
+  for (const signal of decision.signals) {
+    const math =
+      `${signal.value.toFixed(2)} × ${signal.weight.toFixed(2)} = +${signal.contribution.toFixed(2)}`;
+    const receipt = signal.evidence_url
+      ? ` ([source](${signal.evidence_url}))`
+      : " (no public evidence observed; counted as 0)";
+    lines.push(`- \`${signal.name}\`: ${math}${receipt}`);
+  }
+
+  if (decision.assumptions.length > 0) {
+    lines.push("", "**Assumptions and missing evidence**");
+    for (const assumption of decision.assumptions) lines.push(`- ${assumption}`);
+  }
+  lines.push("", `**Fallback:** ${decision.fallback}`);
+  return lines;
 }
 
 interface EvidenceGroups {

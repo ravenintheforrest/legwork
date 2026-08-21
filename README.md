@@ -16,7 +16,10 @@ Anyone can ship an agent now. The work that compounds is operating a portfolio o
 knowing what each costs, whether it still earns its place, what it may do unattended, and
 how it gets better. legwork treats that as the product:
 
-- **Evals** — every agent scored against a golden set; regressions fail CI.
+- **Explainable decisions** — no black-box score: every qualification shows signal × weight,
+  missing evidence, the proposed action, and its fallback; the same record ships beside the brief.
+- **Evals** — every agent scored against a golden set; regressions fail CI, including loss of
+  the score explanation contract.
 - **Loops** — self-heal (`legwork doctor`), review (`legwork review`), improve
   (`legwork improve` — the fleet proposes PRs to its own prompts), retire (`legwork retire`).
 - **Receipts** — briefs cite evidence URLs for every sentence; full run transcripts linkable.

@@ -2,7 +2,7 @@
 // The weights and thresholds here are the eval contract — change them and the golden
 // set moves with them (packs/expo/golden-set.jsonl, `legwork evals`).
 
-import type { Account, AgentDef, Evidence, RunContext, Segment } from "../types.js";
+import type { Account, AgentDef, Evidence, QualificationDecision, RunContext, Segment } from "../types.js";
 import type { OrgProfile, Repo } from "../gh.js";
 
 type SignalName =
@@ -57,6 +57,7 @@ export const qualify: AgentDef = {
       // A person's side project never becomes an account, and never carries more
       // confidence than a person's side project deserves.
       const confidence = round2(isUser ? Math.min(weighted, 0.25) : weighted);
+      const qualification = decisionFor(signals, round2(weighted), qualified, isUser);
 
       // Re-scoring replaces this agent's own receipts; everyone else's carry forward.
       const carried = account.evidence.filter((e) => e.agent !== "qualify");
@@ -67,6 +68,7 @@ export const qualify: AgentDef = {
         stage: qualified ? "qualified" : "enriched",
         segment: qualified ? segmentOf(profile, signals) : undefined,
         confidence,
+        qualification,
         evidence: [...carried, ...fresh],
         updated: ctx.now(),
       });
@@ -228,6 +230,42 @@ function segmentOf(profile: OrgProfile | null, signals: Signal[]): Segment {
   return "A";
 }
 
+function decisionFor(
+  signals: Signal[],
+  score: number,
+  qualified: boolean,
+  isUser: boolean,
+): QualificationDecision {
+  const visible = signals.map((signal) => ({
+    name: signal.name,
+    value: round2(signal.score),
+    weight: WEIGHTS[signal.name],
+    contribution: round4(signal.score * WEIGHTS[signal.name]),
+    ...(signal.evidence ? { evidence_url: signal.evidence.url } : {}),
+  }));
+  const assumptions = signals
+    .filter((signal) => !signal.evidence)
+    .map((signal) => `No public evidence observed for ${signal.name}; counted as 0, not treated as known false.`);
+
+  if (isUser) {
+    assumptions.unshift("The GitHub namespace resolves to a person, not a company account.");
+  }
+
+  return {
+    score,
+    threshold: QUALIFY_AT,
+    qualified,
+    action: isUser ? "exclude" : qualified ? "brief" : "hold",
+    signals: visible,
+    assumptions,
+    fallback: isUser
+      ? "Exclude personal namespaces; require company or organization resolution before reconsidering."
+      : qualified
+        ? "Send to brief; the confidence gate may still require human review before publication."
+        : "Hold; collect stronger production or company evidence, then rescore.",
+  };
+}
+
 function splitFullName(full: string): { owner: string; name: string; full: string } | null {
   const [owner, name] = full.split("/");
   return owner && name ? { owner, name, full } : null;
@@ -260,4 +298,8 @@ function thousands(n: number): string {
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+function round4(n: number): number {
+  return Math.round((n + Number.EPSILON) * 10_000) / 10_000;
 }

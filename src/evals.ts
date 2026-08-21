@@ -105,9 +105,11 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
     { key: "enrich_presence", label: "enrich.presence", correct: 0, total: 0 },
     { key: "qualify_verdict", label: "qualify.verdict", correct: 0, total: 0 },
     { key: "qualify_segment", label: "qualify.segment", correct: 0, total: 0 },
+    { key: "qualify_explanation", label: "qualify.explanation", correct: 0, total: 0 },
     { key: "dedupe_domains", label: "dedupe.domains", correct: 0, total: 0 },
   ];
-  const [presence, domain, enriched, verdict, segment, deduped] = metrics as [
+  const [presence, domain, enriched, verdict, segment, explanation, deduped] = metrics as [
+    Metric,
     Metric,
     Metric,
     Metric,
@@ -136,6 +138,19 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
       verdict.total += 1;
       const isQualified = account?.stage === "qualified";
       if (isQualified === (row.verdict === "qualified")) verdict.correct += 1;
+
+      explanation.total += 1;
+      const decision = account?.qualification;
+      const contribution = decision?.signals.reduce((sum, signal) => sum + signal.contribution, 0) ?? NaN;
+      const expectedAction = row.verdict === "qualified" ? "brief" : account?.kind === "user" ? "exclude" : "hold";
+      if (
+        decision &&
+        decision.action === expectedAction &&
+        decision.qualified === (row.verdict === "qualified") &&
+        Math.abs(contribution - decision.score) <= 0.011
+      ) {
+        explanation.correct += 1;
+      }
     }
 
     if (row.segment) {

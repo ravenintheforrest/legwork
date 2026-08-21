@@ -10,6 +10,7 @@ import { loadAccounts } from "./store.js";
 import { runPipeline, type RunSummary } from "./runner.js";
 import { runReview } from "./review.js";
 import { runRetire } from "./retire.js";
+import { writeReviewPage } from "./reviewhtml.js";
 import type { Account, RunRecord } from "./types.js";
 
 const ACCOUNTS_FILE = "data/accounts.jsonl";
@@ -73,7 +74,14 @@ program.command("review").description("approve/reject queued briefs (HITL loop)"
   .option("--approve <org>", "approve one queued brief (non-interactive)")
   .option("--reject <org>", "reject one queued brief (non-interactive)")
   .option("--stats", "acceptance rate and queue depth")
-  .action(async (options: { approve?: string; reject?: string; stats?: boolean }) => {
+  .option("--html", "generate briefs/review.html — judge in the browser, record via CLI")
+  .action(async (options: { approve?: string; reject?: string; stats?: boolean; html?: boolean }) => {
+    if (options.html) {
+      const file = writeReviewPage();
+      console.log(`review page written: ${file}`);
+      console.log("open it, stage decisions, then paste the command it builds for you.");
+      return;
+    }
     await runReview(options);
   });
 program.command("doctor").description("diagnose a failing run (self-heal loop)").argument("[run]").action(todo("doctor"));

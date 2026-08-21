@@ -34,7 +34,9 @@ program.command("run").description("run the fleet (or one agent) over the pipeli
     });
   });
 
-program.command("demo").description("seeded deterministic run — offline-safe").action(async () => {
+program.command("demo").description("seeded deterministic run — offline-safe")
+  .option("--capture-llm", "call the live model once and record replay fixtures for demo mode")
+  .action(async (options: { captureLlm?: boolean }) => {
   console.log("legwork demo: the whole pipeline over recorded fixtures in fixtures/.");
   console.log("No credentials, no network, same output every time.");
   console.log("");
@@ -44,7 +46,7 @@ program.command("demo").description("seeded deterministic run — offline-safe")
   rmSync(ACCOUNTS_FILE, { force: true });
   rmSync(BRIEFS_DIR, { recursive: true, force: true });
 
-  const summary = await runPipeline({ mode: "fixture", sinceDays: 7 });
+  const summary = await runPipeline({ mode: "fixture", sinceDays: 7, captureLlm: options.captureLlm === true });
   console.log("");
   printDemoSummary(summary);
 });

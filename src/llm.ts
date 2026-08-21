@@ -1,5 +1,19 @@
-// One interface for model calls. Nothing else in the fleet imports the SDK, so cost
-// metering and the offline path stay in one place.
+// One interface for model calls. Nothing else in the fleet imports a provider directly,
+// so cost metering, capture, and the offline replay path stay in one place.
+//
+// Providers:
+//   AnthropicLLM  — SDK + ANTHROPIC_API_KEY (the production path)
+//   ClaudeCliLLM  — shells out to `claude -p`; runs on a Claude subscription instead of
+//                   per-token billing (opt in: LEGWORK_LLM=cli)
+//   ReplayLLM     — fixture playback keyed by request hash; what demo mode uses, so the
+//                   demo shows authentic model output and stays deterministic and offline
+// RecordingLLM wraps a live provider and saves every response as a replay fixture.
+
+import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+const REPLAY_DIR = "fixtures/llm";
 
 export interface LLMRequest {
   model: string;
@@ -15,16 +29,48 @@ export interface LLMResponse {
 }
 
 export interface LLM {
+  readonly kind: "api" | "cli" | "replay";
   complete(req: LLMRequest): Promise<LLMResponse>;
 }
 
-export function makeLLM(): LLM | null {
+export class ReplayMissError extends Error {
+  constructor(key: string) {
+    super(`no replay fixture for request ${key} — run \`legwork demo --capture-llm\` once, live`);
+  }
+}
+
+export function requestKey(req: LLMRequest): string {
+  return createHash("sha256")
+    .update(req.model)
+    .update(" ")
+    .update(req.system)
+    .update(" ")
+    .update(req.prompt)
+    .digest("hex")
+    .slice(0, 16);
+}
+
+export function makeLLM(mode: "live" | "fixture", captureLlm = false): LLM | null {
+  if (mode === "fixture") {
+    if (captureLlm) {
+      const live = liveProvider();
+      return live ? new RecordingLLM(live) : null;
+    }
+    return new ReplayLLM();
+  }
+  const live = liveProvider();
+  return live ? new RecordingLLM(live) : null;
+}
+
+function liveProvider(): LLM | null {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
-  return new AnthropicLLM(apiKey);
+  if (apiKey) return new AnthropicLLM(apiKey);
+  if (process.env.LEGWORK_LLM === "cli") return new ClaudeCliLLM();
+  return null;
 }
 
 class AnthropicLLM implements LLM {
+  readonly kind = "api" as const;
   constructor(private readonly apiKey: string) {}
 
   async complete(req: LLMRequest): Promise<LLMResponse> {
@@ -39,8 +85,6 @@ class AnthropicLLM implements LLM {
       messages: [{ role: "user", content: req.prompt }],
     });
 
-    // TODO: handle the server-side refusal stop reason for fable-tier calls; that
-    // needs an SDK bump before it can be narrowed properly.
     const text = response.content
       .filter((block) => block.type === "text")
       .map((block) => block.text)
@@ -52,5 +96,82 @@ class AnthropicLLM implements LLM {
       tokens_in: response.usage.input_tokens,
       tokens_out: response.usage.output_tokens,
     };
+  }
+}
+
+class ClaudeCliLLM implements LLM {
+  readonly kind = "cli" as const;
+
+  async complete(req: LLMRequest): Promise<LLMResponse> {
+    // System and user content travel together on stdin; `-p` gives one non-interactive
+    // turn and `--output-format json` returns { result, usage } we can meter.
+    const input = req.system + "\n\n---\n\n" + req.prompt;
+    const stdout = await new Promise<string>((resolve, reject) => {
+      const child = spawn("claude", ["-p", "--output-format", "json", "--model", req.model], {
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 180_000,
+      });
+      let out = "";
+      let err = "";
+      child.stdout.on("data", (d: Buffer) => (out += d.toString()));
+      child.stderr.on("data", (d: Buffer) => (err += d.toString()));
+      child.on("error", reject);
+      child.on("close", (code) => {
+        if (code === 0) resolve(out);
+        else reject(new Error(`claude CLI exited ${code}: ${err.slice(0, 300)}`));
+      });
+      child.stdin.write(input);
+      child.stdin.end();
+    });
+    const parsed = JSON.parse(stdout) as {
+      result?: string;
+      usage?: { input_tokens?: number; output_tokens?: number };
+      is_error?: boolean;
+    };
+    if (parsed.is_error || typeof parsed.result !== "string") {
+      throw new Error("claude CLI returned an error result");
+    }
+    return {
+      text: parsed.result.trim(),
+      tokens_in: parsed.usage?.input_tokens ?? 0,
+      tokens_out: parsed.usage?.output_tokens ?? 0,
+    };
+  }
+}
+
+class ReplayLLM implements LLM {
+  readonly kind = "replay" as const;
+  constructor(private readonly dir = REPLAY_DIR) {}
+
+  async complete(req: LLMRequest): Promise<LLMResponse> {
+    const key = requestKey(req);
+    const file = join(this.dir, key + ".json");
+    if (!existsSync(file)) throw new ReplayMissError(key);
+    const saved = JSON.parse(readFileSync(file, "utf8")) as LLMResponse;
+    return { text: saved.text, tokens_in: saved.tokens_in, tokens_out: saved.tokens_out };
+  }
+}
+
+class RecordingLLM implements LLM {
+  constructor(
+    private readonly inner: LLM,
+    private readonly dir = REPLAY_DIR,
+  ) {}
+
+  get kind(): "api" | "cli" | "replay" {
+    return this.inner.kind;
+  }
+
+  async complete(req: LLMRequest): Promise<LLMResponse> {
+    const response = await this.inner.complete(req);
+    mkdirSync(this.dir, { recursive: true });
+    const fixture = {
+      model: req.model,
+      text: response.text,
+      tokens_in: response.tokens_in,
+      tokens_out: response.tokens_out,
+    };
+    writeFileSync(join(this.dir, requestKey(req) + ".json"), JSON.stringify(fixture, null, 2) + "\n");
+    return response;
   }
 }

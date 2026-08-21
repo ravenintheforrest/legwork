@@ -2,6 +2,7 @@
 // Rule 6 — no source, no sentence: the template only formats account.evidence, it never
 // adds a fact. Without a model key it is fully deterministic and offline.
 
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import yaml from "js-yaml";
@@ -29,9 +30,22 @@ export const brief: AgentDef = {
     const out: Account[] = [];
 
     for (const account of queue) {
-      const modelBody = await modelBrief(account, ctx, segmentNames);
-      const briefMode = modelBody ? "model" : "template";
-      const body = modelBody ?? renderBrief(account, ctx, segmentNames);
+      const model = await modelBrief(account, ctx, segmentNames);
+      let briefMode = "template";
+      let rejectReason: string | null = null;
+      let body: string;
+      if (model) {
+        rejectReason = validateModelBrief(model.text, account);
+        if (rejectReason === null) {
+          briefMode = model.provider === "replay" ? "model-replay" : "model";
+          body = ctx.mode === "fixture" ? injectFixtureBanner(model.text) : model.text;
+        } else {
+          // The citations gate: model output that strays from the evidence never ships.
+          body = renderBrief(account, ctx, segmentNames);
+        }
+      } else {
+        body = renderBrief(account, ctx, segmentNames);
+      }
       // HITL gate: confidence below the registry bar queues for a human (F7);
       // at or above it, the brief publishes directly.
       const queued = (account.confidence ?? 0) < gate;
@@ -45,6 +59,15 @@ export const brief: AgentDef = {
             org: account.org,
             brief_mode: briefMode,
             review_gate: gate,
+            llm: model
+              ? {
+                  model: model.model,
+                  provider: model.provider,
+                  prompt_version: model.promptVersion,
+                  latency_ms: model.latencyMs,
+                  reject_reason: rejectReason,
+                }
+              : null,
             qualification: account.qualification ?? null,
           },
           null,
@@ -65,11 +88,19 @@ export const brief: AgentDef = {
 
 // --- model path (rule 4: the prompt is an owned file, never inlined here) ---------
 
+interface ModelBriefResult {
+  text: string;
+  model: string;
+  provider: "api" | "cli" | "replay";
+  promptVersion: string;
+  latencyMs: number;
+}
+
 async function modelBrief(
   account: Account,
   ctx: RunContext,
   segmentNames: Record<string, string>,
-): Promise<string | null> {
+): Promise<ModelBriefResult | null> {
   if (!ctx.llm) return null;
   const promptFile = join(ctx.pack, "prompts", "brief.md");
   if (!existsSync(promptFile)) return null;
@@ -86,9 +117,51 @@ async function modelBrief(
   });
 
   const model = effective(loadRegistry(), "brief").model;
-  const response = await ctx.llm.complete({ model, system, prompt: filled, maxTokens: 1200 });
-  ctx.costs.charge(model, response.tokens_in, response.tokens_out);
-  return injectDecisionSection(response.text, account);
+  const promptVersion = createHash("sha256").update(readFileSync(promptFile)).digest("hex").slice(0, 8);
+  const startedAt = Date.now();
+  try {
+    const response = await ctx.llm.complete({ model, system, prompt: filled, maxTokens: 1200 });
+    ctx.costs.charge(model, response.tokens_in, response.tokens_out);
+    return {
+      text: injectDecisionSection(response.text, account),
+      model,
+      provider: ctx.llm.kind,
+      promptVersion,
+      latencyMs: Date.now() - startedAt,
+    };
+  } catch (err) {
+    // Missing replay fixture or provider failure: the template path is the fallback,
+    // never a blank brief and never a crashed run — but never a silent one either.
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error(`  ! brief model path unavailable for ${account.org}: ${reason.slice(0, 160)} (template fallback)`);
+    return null;
+  }
+}
+
+// The gate that makes "claims restricted to supplied evidence" structural: required
+// sections present, and every link in the body is a URL the evidence actually contains.
+function validateModelBrief(body: string, account: Account): string | null {
+  const required = ["## Who", "## Production Expo signals", "## Suggested opener"];
+  for (const heading of required) {
+    if (!body.includes(heading)) return `missing section: ${heading}`;
+  }
+  const allowed = new Set(account.evidence.map((e) => e.url));
+  const links = [...body.matchAll(/\]\((https?:[^)]+)\)/g)].map((m) => m[1]!);
+  if (links.length < 3) return "fewer than 3 receipts";
+  for (const url of links) {
+    if (!allowed.has(url)) return `uncited URL not in evidence: ${url}`;
+  }
+  return null;
+}
+
+function injectFixtureBanner(body: string): string {
+  const lines = body.split("\n");
+  const banner = [
+    "",
+    "> **FIXTURE DATA** — authored sample evidence; source links may not resolve.",
+    "> Model output replayed from a recorded fixture. Run `legwork run` (live) for real receipts.",
+  ];
+  return [lines[0], ...banner, ...lines.slice(1)].join("\n");
 }
 
 function parsePrompt(source: string): { system: string; user: string } {

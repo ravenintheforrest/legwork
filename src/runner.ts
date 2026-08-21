@@ -23,6 +23,7 @@ export interface RunOptions {
   sinceDays: number;
   registryPath?: string;
   dataDir?: string;
+  captureLlm?: boolean;   // fixture-mode only: call the live model and record replay fixtures
 }
 
 export interface AgentRunSummary {
@@ -65,8 +66,9 @@ export async function runPipeline(opts: RunOptions): Promise<RunSummary> {
     cacheDir: join(dataDir, "cache"),
   });
   const store = new StoreSignals({ mode: opts.mode });
-  // Fixture mode never calls a model: the demo must run offline and deterministically.
-  const llm = opts.mode === "fixture" ? null : makeLLM();
+  // Fixture mode replays captured model responses: the demo shows authentic model
+  // output and still runs offline and deterministically. --capture-llm records them.
+  const llm = makeLLM(opts.mode, opts.captureLlm === true);
   const now = opts.mode === "fixture" ? () => FIXTURE_NOW : () => new Date().toISOString();
 
   let state = loadAccounts(accountsFile);

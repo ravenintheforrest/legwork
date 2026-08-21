@@ -4,9 +4,12 @@ segments:
   A: { name: mobile-first startup,      example: Partiful,   tell: app is the product; no native team by design }
   B: { name: app-as-channel mid/ent,    example: Mollie,     tell: web-strength org extends to mobile; compliance pressure }
   C: { name: JS-forward established org, example: MTA,       tell: OTA speed is the wedge }
-  D: { name: agency/studio,             example: "-",        tell: one org, many store developer accounts; build volume }
+  D: { name: agency/studio,             example: "-",        tell: "one org, many store developer accounts; build volume" }
 signals:
-  fit: [eas_json_present, rn_version_recency, ci_config, team_size_signals]
+  # hiring_signal joined fit at weight 0.10 on 2026-08-21; the 0.10 came out of
+  # eas_json_present (0.30 -> 0.20), which is already the hard qualification gate and so
+  # was counting the same fact twice. Weights still sum to 1.00 — see src/agents/qualify.ts.
+  fit: [eas_json_present, rn_version_recency, ci_config, team_size_signals, hiring_signal]
   scale: [store_review_volume]        # public MAU proxy — EAS bills on MAUs
   velocity: [store_update_cadence]    # public build/OTA proxy — EAS bills on builds
   compliance: [regulated_industry]    # enterprise-tier pressure

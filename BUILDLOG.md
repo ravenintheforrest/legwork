@@ -105,3 +105,20 @@ One entry per working session: date, what happened, why it went that way.
   end to end afterward: tsc clean, evals 7/7 at 1.00, demo byte-identical including
   decision records, improve's refusal/replay-miss/gate paths exercised, MCP smoke
   client run against demo data. Coding scope is closed; next phase is refine/test.
+
+## 2026-08-21 (day) — coding scope closed; practitioner feedback enacted; repo public
+- Practitioner review (Jake Heenehan, built Cyrus AI): "get personal on the good leads" →
+  `people` unit (top contributors + public profiles → Who to talk to; opener addressed to
+  a named person about something they shipped). Live result: "Fabian, you have 163 commits
+  to DodoraApp/DodoStream…" with receipts. "Web app, then say you can connect to Slack" →
+  `legwork report` fleet console (static, CI-deployed to GitHub Pages) + Slack webhook
+  adapter (`notify`, and on approve). `review --html` for browser-side judging.
+- Cloud session delivered `improve` (fleet PRs itself, propose tier, structural gate),
+  the MCP server (5 read-only tools, smoke-tested), receipt dedupe, replay latency pin.
+  Merged via isolated worktree; two small conflicts resolved (registry order, roadmap).
+- Routing: brief on Opus; frontier model reserved. Fixtures re-captured on Opus (9 cast),
+  replay byte-deterministic; live run re-done (32 accounts, 5 briefs with people).
+- Repo flipped PUBLIC; non-public-data references scrubbed; Pages enabled — console live at
+  https://ravenintheforrest.github.io/legwork/ . CI gate green on every push.
+- `improve brief` captured once on Opus; replays offline (memos/improve/).
+- Coding scope closed. Next: refine/test — rehearsal script + two dress runs.

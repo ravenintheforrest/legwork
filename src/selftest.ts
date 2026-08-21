@@ -27,10 +27,11 @@ import {
 } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { dirname, join, relative, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import yaml from "js-yaml";
 
+import { AGENTS } from "./agents/index.js";
 import { brief } from "./agents/brief.js";
 import { StoreSignals } from "./appstore.js";
 import { CostCeilingError, CostMeter, PRICES_PER_MTOK } from "./costs.js";
@@ -802,4 +803,209 @@ export async function runSelftest(opts: SelftestOptions = {}): Promise<number> {
   }
   console.log(`FAIL · ${failed.length} of ${rows.length} checks · ${seconds}s`);
   return 1;
+}
+
+// --- `legwork soak` ----------------------------------------------------------------
+//
+// The selftest above proves the fleet is correct against fixtures. Soak asks the other
+// question: what does the real world look like at the edges? It drives the *non-model*
+// units — discover → resolve → enrich → dedupe → qualify — over a much wider discovery
+// window than a normal run, one account at a time so a single bad shape cannot take the
+// batch down, and reports the failure classes it found with counts and one example each.
+//
+// No brief generation, so it costs nothing but GitHub API calls. It runs chdir'd into a
+// throwaway copy of the repo so its HTTP cache lands there and data/ stays untouched.
+
+
+export interface SoakOptions {
+  orgs?: number;
+  sinceDays?: number;
+  out?: string;
+}
+
+interface Failure {
+  klass: string;
+  example: string;
+}
+
+/** Collapse a message into a class: digits and quoted values vary, the shape does not. */
+function signature(message: string): string {
+  return message
+    .replace(/\s+/g, " ")
+    .replace(/\b\d[\d.,]*\b/g, "N")
+    .replace(/"[^"]*"/g, '"…"')
+    .replace(/https?:\/\/\S+/g, "<url>")
+    .trim()
+    .slice(0, 120);
+}
+
+function classify(agent: string, err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  if (/rate.?limit|secondary rate|\b429\b/i.test(message)) return `${agent}: rate limited`;
+  if (/\b403\b|forbidden/i.test(message)) return `${agent}: forbidden (403)`;
+  if (/\b404\b|not found/i.test(message)) return `${agent}: not found (404)`;
+  if (/ENOTFOUND|ECONNRESET|ETIMEDOUT|fetch failed|timeout/i.test(message)) return `${agent}: network error`;
+  if (/JSON|unexpected token|is not valid/i.test(message)) return `${agent}: unparseable response`;
+  if (/undefined|null|not a function|Cannot read/i.test(message)) return `${agent}: unhandled shape`;
+  return `${agent}: crash — ${signature(message)}`;
+}
+
+export async function runSoak(opts: SoakOptions = {}): Promise<number> {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    console.error("legwork soak needs GITHUB_TOKEN — it is the live-edges probe, not the offline one.");
+    console.error("Set it in .env, or run `legwork selftest` for the offline checks.");
+    return 1;
+  }
+
+  const limit = opts.orgs ?? 50;
+  const sinceDays = opts.sinceDays ?? 90;
+  // Resolved before the chdir, or --out would land inside the throwaway copy.
+  const outPath = opts.out ? resolvePath(opts.out) : undefined;
+  const dir = workingCopy(["packs", "registry.yaml"]);
+
+  try {
+    return await inDir(dir, async () => {
+      const registry = loadRegistry("registry.yaml");
+      const ctx: RunContext = {
+        pack: registry.pack,
+        mode: "live",
+        now: () => new Date().toISOString(),
+        sinceDays,
+        gh: new GitHubClient({ mode: "live", token, cacheDir: join(dir, "data", "cache") }),
+        // The app-store adapter has no live path yet; soak probes the GitHub surface.
+        store: new StoreSignals({ mode: "fixture" }),
+        llm: null,
+        costs: new CostMeter(Number.POSITIVE_INFINITY),
+      };
+
+      const failures: Failure[] = [];
+      const note = (klass: string, example: string): void => void failures.push({ klass, example });
+
+      console.log(`legwork soak — live, ${sinceDays}d window, up to ${limit} orgs. No briefs, no model spend.`);
+
+      let discovered: Account[] = [];
+      const startedAt = Date.now();
+      try {
+        discovered = await quietly(() => AGENTS.discover!.run([], ctx));
+      } catch (err) {
+        note(classify("discover", err), err instanceof Error ? err.message.slice(0, 200) : String(err));
+      }
+      const candidates = discovered.slice(0, limit);
+      console.log(`discover → ${discovered.length} candidates, taking ${candidates.length}`);
+
+      // Per-account so one bad shape cannot take the batch down.
+      const survivors: Account[] = [];
+      for (const candidate of candidates) {
+        let account = candidate;
+        let dead = false;
+        for (const agent of ["resolve", "enrich"] as const) {
+          try {
+            const out = await quietly(() => AGENTS[agent]!.run([account], ctx));
+            if (out.length === 0) {
+              if (agent === "resolve") note("resolve: unresolvable org", account.org);
+              else note("enrich: no company facts found", account.org);
+              continue;
+            }
+            account = out[0]!;
+          } catch (err) {
+            note(classify(agent, err), `${account.org}: ${err instanceof Error ? err.message.slice(0, 160) : ""}`);
+            dead = true;
+            break;
+          }
+        }
+        if (dead) continue;
+        if (!account.domain) note("resolve+enrich: no domain resolved", account.org);
+        if (account.kind === "user") note("resolve: personal account (never qualifies)", account.org);
+        if (!account.evidence.some((e) => e.agent === "enrich")) note("enrich: no receipts", account.org);
+        survivors.push(account);
+      }
+
+      let deduped = survivors;
+      try {
+        const out = await quietly(() => AGENTS.dedupe!.run(survivors, ctx));
+        deduped = mergeAccounts(survivors, out);
+      } catch (err) {
+        note(classify("dedupe", err), err instanceof Error ? err.message.slice(0, 200) : String(err));
+      }
+      const holders = new Map<string, number>();
+      for (const a of deduped) if (a.domain) holders.set(a.domain, (holders.get(a.domain) ?? 0) + 1);
+      for (const [domain, count] of holders) {
+        if (count > 1) note("dedupe: one domain held by several accounts", `${domain} (${count})`);
+      }
+
+      let qualified = 0;
+      for (const account of deduped) {
+        try {
+          const out = await quietly(() => AGENTS.qualify!.run([account], ctx));
+          const scored = out[0];
+          if (!scored?.qualification) {
+            note("qualify: no decision record produced", account.org);
+            continue;
+          }
+          const decision = scored.qualification;
+          const sum = decision.signals.reduce((total, s) => total + s.contribution, 0);
+          // Reweight-proof invariants: the arithmetic must reconcile whatever the weights are.
+          if (Math.abs(sum - decision.score) > 0.011) {
+            note("qualify: contributions do not sum to the score", `${account.org}: ${sum} vs ${decision.score}`);
+          }
+          if (decision.qualified !== decision.score >= decision.threshold) {
+            note("qualify: qualified flag disagrees with score vs threshold", account.org);
+          }
+          for (const signal of decision.signals) {
+            if (Math.abs(signal.value * signal.weight - signal.contribution) > 0.011) {
+              note("qualify: a signal's contribution is not value × weight", `${account.org}/${signal.name}`);
+            }
+          }
+          if (scored.stage === "qualified") qualified += 1;
+        } catch (err) {
+          note(classify("qualify", err), `${account.org}: ${err instanceof Error ? err.message.slice(0, 160) : ""}`);
+        }
+      }
+
+      const grouped = new Map<string, { count: number; example: string }>();
+      for (const failure of failures) {
+        const seen = grouped.get(failure.klass);
+        if (seen) seen.count += 1;
+        else grouped.set(failure.klass, { count: 1, example: failure.example });
+      }
+
+      const lines = [
+        `# soak report — ${new Date().toISOString().slice(0, 10)}`,
+        "",
+        `Live run of the non-model units (discover → resolve → enrich → dedupe → qualify).`,
+        `No briefs were generated, so this cost GitHub API calls and nothing else.`,
+        "",
+        `- window: ${sinceDays}d`,
+        `- discovered: ${discovered.length} · attempted: ${candidates.length} · survived to qualify: ${deduped.length}`,
+        `- reached the qualified stage: ${qualified}`,
+        `- elapsed: ${((Date.now() - startedAt) / 1000).toFixed(1)}s`,
+        "",
+        "## Failure classes",
+        "",
+      ];
+      if (grouped.size === 0) {
+        lines.push("None. Every attempted org made it through the non-model pipeline.", "");
+      } else {
+        lines.push("| count | class | example |", "| ---: | --- | --- |");
+        for (const [klass, { count, example }] of [...grouped].sort((a, b) => b[1].count - a[1].count)) {
+          lines.push(`| ${count} | ${klass} | ${example.replace(/\|/g, "\\|").slice(0, 120)} |`);
+        }
+        lines.push("");
+      }
+      const report = lines.join("\n");
+      console.log("");
+      console.log(report);
+
+      if (outPath) {
+        mkdirSync(dirname(outPath), { recursive: true });
+        writeFileSync(outPath, report);
+        console.log(`report written: ${outPath}`);
+      }
+      // Soak reports; it does not gate. The findings are the output.
+      return 0;
+    });
+  } finally {
+    cleanup();
+  }
 }

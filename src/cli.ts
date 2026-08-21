@@ -128,6 +128,18 @@ program.command("selftest").description("the harness checks itself end to end â€
     if (code !== 0) process.exitCode = code;
   });
 
+program.command("soak").description("live probe of the non-model units over a wide window â€” reports what broke")
+  .option("--orgs <n>", "how many discovered orgs to push through", String(50))
+  .option("--since <window>", "discovery window", "90d")
+  .option("--out <file>", "also write the markdown report here")
+  .action(async (options: { orgs: string; since: string; out?: string }) => {
+    const orgs = Number.parseInt(options.orgs, 10);
+    if (!Number.isInteger(orgs) || orgs < 1) throw new Error(`--orgs must be a positive integer (got "${options.orgs}")`);
+    const { runSoak } = await import("./selftest.js");
+    const code = await runSoak({ orgs, sinceDays: parseSince(options.since), out: options.out });
+    if (code !== 0) process.exitCode = code;
+  });
+
 program.command("notify").description("post a published brief's Slack-shaped form to SLACK_WEBHOOK_URL")
   .argument("<org>")
   .action(async (org: string) => {

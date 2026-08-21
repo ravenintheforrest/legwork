@@ -1,0 +1,14 @@
+{
+  "_note": "authored fixture — placeholder person by design (no real person is depicted); recorded shape of GET /users/{login}",
+  "login": "joinzoe-maintainer-1",
+  "type": "User",
+  "name": "Maintainer One",
+  "company": "ZOE",
+  "blog": "https://joinzoe.com",
+  "location": "Remote",
+  "bio": "Mobile engineer at ZOE. Maintains the ZOE app (Expo / React Native).",
+  "html_url": "https://github.com/joinzoe-maintainer-1",
+  "public_repos": 10,
+  "followers": 40,
+  "created_at": "2015-03-01T00:00:00Z"
+}

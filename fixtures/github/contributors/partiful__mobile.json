@@ -1,0 +1,35 @@
+{
+  "_note": "authored fixture — placeholder people by design (no real person is depicted); recorded shape of GET /repos/{owner}/{repo}/contributors, wrapped for the note",
+  "items": [
+    {
+      "login": "partiful-maintainer-1",
+      "html_url": "https://github.com/partiful-maintainer-1",
+      "contributions": 142,
+      "type": "User"
+    },
+    {
+      "login": "dependabot[bot]",
+      "html_url": "https://github.com/apps/dependabot",
+      "contributions": 24,
+      "type": "Bot"
+    },
+    {
+      "login": "partiful-maintainer-2",
+      "html_url": "https://github.com/partiful-maintainer-2",
+      "contributions": 87,
+      "type": "User"
+    },
+    {
+      "login": "partiful-maintainer-3",
+      "html_url": "https://github.com/partiful-maintainer-3",
+      "contributions": 31,
+      "type": "User"
+    },
+    {
+      "login": "partiful-maintainer-4",
+      "html_url": "https://github.com/partiful-maintainer-4",
+      "contributions": 9,
+      "type": "User"
+    }
+  ]
+}

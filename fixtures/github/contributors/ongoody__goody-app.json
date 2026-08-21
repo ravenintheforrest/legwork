@@ -1,0 +1,23 @@
+{
+  "_note": "authored fixture — placeholder people by design (no real person is depicted); recorded shape of GET /repos/{owner}/{repo}/contributors, wrapped for the note",
+  "items": [
+    {
+      "login": "ongoody-maintainer-1",
+      "html_url": "https://github.com/ongoody-maintainer-1",
+      "contributions": 96,
+      "type": "User"
+    },
+    {
+      "login": "ongoody-maintainer-2",
+      "html_url": "https://github.com/ongoody-maintainer-2",
+      "contributions": 40,
+      "type": "User"
+    },
+    {
+      "login": "ongoody-maintainer-3",
+      "html_url": "https://github.com/ongoody-maintainer-3",
+      "contributions": 12,
+      "type": "User"
+    }
+  ]
+}

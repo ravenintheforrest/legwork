@@ -39,9 +39,13 @@ agents:
   dedupe:
     does: reconcile duplicate orgs/domains, flag low-confidence records
     output: accounts.jsonl
+  people:
+    does: who to talk to — top contributors to the Expo repo and their public profiles
+    sources: [github_contributors, github_users]
+    output: accounts.jsonl
   brief:
     does: write the account brief — who, evidence, why now, suggested opener. Every claim carries its evidence URL.
-    model: claude-fable-5                # frontier tier earns its keep here
+    model: claude-opus-5                 # reasoning tier earns its keep here; frontier stays reserved
     cost_ceiling_usd: 2.00
     output: briefs/
   ops-brief:

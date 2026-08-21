@@ -9,6 +9,7 @@ import { enrich } from "./enrich.js";
 import { dedupe } from "./dedupe.js";
 import { qualify } from "./qualify.js";
 import { intent } from "./intent.js";
+import { people } from "./people.js";
 import { brief } from "./brief.js";
 
 export const AGENTS: Record<string, AgentDef> = {
@@ -19,7 +20,8 @@ export const AGENTS: Record<string, AgentDef> = {
   dedupe,
   qualify,
   intent,
+  people,
   brief,
 };
 
-export const PIPELINE = ["discover", "discover-gitlab", "resolve", "enrich", "dedupe", "qualify", "intent", "brief"];
+export const PIPELINE = ["discover", "discover-gitlab", "resolve", "enrich", "dedupe", "qualify", "intent", "people", "brief"];

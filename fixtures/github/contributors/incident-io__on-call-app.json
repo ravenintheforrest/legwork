@@ -1,0 +1,29 @@
+{
+  "_note": "authored fixture — placeholder people by design (no real person is depicted); recorded shape of GET /repos/{owner}/{repo}/contributors, wrapped for the note",
+  "items": [
+    {
+      "login": "dependabot[bot]",
+      "html_url": "https://github.com/apps/dependabot",
+      "contributions": 24,
+      "type": "Bot"
+    },
+    {
+      "login": "incident-io-maintainer-1",
+      "html_url": "https://github.com/incident-io-maintainer-1",
+      "contributions": 174,
+      "type": "User"
+    },
+    {
+      "login": "incident-io-maintainer-2",
+      "html_url": "https://github.com/incident-io-maintainer-2",
+      "contributions": 92,
+      "type": "User"
+    },
+    {
+      "login": "incident-io-maintainer-3",
+      "html_url": "https://github.com/incident-io-maintainer-3",
+      "contributions": 45,
+      "type": "User"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "_note": "authored fixture — placeholder person by design (no real person is depicted); recorded shape of GET /users/{login}",
+  "login": "ongoody-maintainer-2",
+  "type": "User",
+  "name": "Maintainer Two",
+  "company": "Goody",
+  "blog": "https://ongoody.com",
+  "location": "New York, NY",
+  "bio": "React Native developer on the Goody mobile team. EAS builds and releases for the Goody app.",
+  "html_url": "https://github.com/ongoody-maintainer-2",
+  "public_repos": 13,
+  "followers": 30,
+  "created_at": "2016-03-01T00:00:00Z"
+}

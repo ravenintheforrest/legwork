@@ -1,0 +1,23 @@
+{
+  "_note": "authored fixture — placeholder people by design (no real person is depicted); recorded shape of GET /repos/{owner}/{repo}/contributors, wrapped for the note",
+  "items": [
+    {
+      "login": "usebounce-maintainer-1",
+      "html_url": "https://github.com/usebounce-maintainer-1",
+      "contributions": 118,
+      "type": "User"
+    },
+    {
+      "login": "usebounce-maintainer-2",
+      "html_url": "https://github.com/usebounce-maintainer-2",
+      "contributions": 64,
+      "type": "User"
+    },
+    {
+      "login": "usebounce-maintainer-3",
+      "html_url": "https://github.com/usebounce-maintainer-3",
+      "contributions": 22,
+      "type": "User"
+    }
+  ]
+}

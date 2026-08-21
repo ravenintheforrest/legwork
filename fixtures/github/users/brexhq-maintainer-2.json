@@ -1,0 +1,14 @@
+{
+  "_note": "authored fixture — placeholder person by design (no real person is depicted); recorded shape of GET /users/{login}",
+  "login": "brexhq-maintainer-2",
+  "type": "User",
+  "name": "Maintainer Two",
+  "company": "Brex",
+  "blog": "https://brex.com",
+  "location": "New York, NY",
+  "bio": "React Native developer on the Brex mobile team. EAS builds and releases for the Brex mobile app.",
+  "html_url": "https://github.com/brexhq-maintainer-2",
+  "public_repos": 13,
+  "followers": 30,
+  "created_at": "2016-03-01T00:00:00Z"
+}

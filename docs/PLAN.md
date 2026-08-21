@@ -6,7 +6,7 @@ is not "can he build" — it's "has he *operated* 25–30 agents." The harness a
 
 ## What it does
 Expo's funnel problem from the outside: which anonymous developers are companies running
-Expo in production? Public data only (CIIAA clean lane).
+Expo in production? Public data only.
 
     discover → resolve → enrich → qualify → intent → brief
                     ↘ dedupe / quality ↙
@@ -33,6 +33,12 @@ Expo in production? Public data only (CIIAA clean lane).
    callback at 5% of the risk.
 6. **Demo climax (new):** show the gate CATCHING something live — the tampered-baseline
    regression exit or a queued low-confidence brief — the harness proving it operates.
+**Amendment 2026-08-21 (practitioner feedback, Jake Heenehan / Cyrus AI):** "get as personal
+as possible on the good leads" → `people` unit + Who-to-talk-to section (built). "Web app,
+then say you can connect to Slack — CLI is not enough" → static fleet console (`legwork
+report`, deployed by CI) + Slack webhook adapter (built). This reverses the council's cut of
+the status UI on the strength of a comparable-product builder's read plus the first real
+reviewer's experience; kept cheap and window-not-cockpit so rehearsal time survives.
 CUT to README next-steps (10 min of writing, not 7h of building): (c) status report,
 (d) doctor self-heal, (f) synthetic outcome metrics. (d)/(f) are the interviewer's own
 territory; imitation invites losing comparisons.

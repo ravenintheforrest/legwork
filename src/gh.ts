@@ -27,17 +27,35 @@ export interface CodeSearch {
   items: CodeSearchItem[];
 }
 
-// One shape for /orgs/<login> and /users/<login> — resolve only reads the common fields.
+// One shape for /orgs/<login> and /users/<login> — resolve only reads the common fields;
+// people reads the user-only public fields (company, bio, location) when present.
 export interface OrgProfile {
   login: string;
   type?: string;
   name?: string | null;
   blog?: string | null;
   description?: string | null;
+  company?: string | null;
+  bio?: string | null;
+  location?: string | null;
   html_url: string;
   public_repos?: number;
   followers?: number;
   created_at?: string;
+}
+
+// One row of GET /repos/<owner>/<repo>/contributors.
+export interface Contributor {
+  login: string;
+  html_url: string;
+  contributions: number;
+  type?: string;              // "User" | "Bot"
+}
+
+// The live endpoint returns a bare array; fixtures wrap it so authored placeholder
+// people carry the same `_note` marker as every other fixture.
+interface ContributorsFixture {
+  items: Contributor[];
 }
 
 export interface Repo {
@@ -147,6 +165,18 @@ export class GitHubClient {
     return this.get<Repo>(`${API}/repos/${owner}/${name}`);
   }
 
+  // Top contributors by commit count, fixture-keyed by repo
+  // (fixtures/github/contributors/<owner>__<repo>.json). An absent fixture is an empty
+  // list: a repo with no public contributor data is a normal outcome, not a missing fixture.
+  async contributors(owner: string, name: string): Promise<Contributor[]> {
+    if (this.mode === "fixture") {
+      const file = join(this.fixtureDir, "github", "contributors", `${owner}__${name}.json`);
+      return readJson<ContributorsFixture>(file)?.items ?? [];
+    }
+    const body = await this.get<Contributor[]>(`${API}/repos/${owner}/${name}/contributors?per_page=10`);
+    return Array.isArray(body) ? body : [];
+  }
+
   async contents(owner: string, name: string, path: string): Promise<Contents | null> {
     const slug = path.split("/").join("__");
     if (this.mode === "fixture") {
@@ -158,7 +188,8 @@ export class GitHubClient {
     return normalizeContents(body, owner, name, path);
   }
 
-  // Read-through cache; 404s are cached too, so a missing file is not re-fetched every run.
+  // Read-through cache; 404s (and 204 empty bodies) are cached too, so a missing file is
+  // not re-fetched every run.
   private async get<T>(url: string): Promise<T | null> {
     const cached = this.readCache(url);
     if (cached) return cached.status === 404 ? null : (cached.body as T);
@@ -167,8 +198,8 @@ export class GitHubClient {
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
     const response = await fetch(url, { headers });
 
-    if (response.status === 404) {
-      this.writeCache({ url, fetched_at: new Date().toISOString(), status: 404, body: null });
+    if (response.status === 404 || response.status === 204) {
+      this.writeCache({ url, fetched_at: new Date().toISOString(), status: response.status, body: null });
       return null;
     }
     if (!response.ok) {

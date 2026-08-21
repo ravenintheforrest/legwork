@@ -141,7 +141,7 @@ async function modelBrief(
 // The gate that makes "claims restricted to supplied evidence" structural: required
 // sections present, and every link in the body is a URL the evidence actually contains.
 function validateModelBrief(body: string, account: Account): string | null {
-  const required = ["## Who", "## Production Expo signals", "## Suggested opener"];
+  const required = ["## Who", "## Production Expo signals", "## Who to talk to", "## Suggested opener"];
   for (const heading of required) {
     if (!body.includes(heading)) return `missing section: ${heading}`;
   }
@@ -200,6 +200,11 @@ function renderBrief(account: Account, ctx: RunContext, segmentNames: Record<str
 
   lines.push("## Production Expo signals");
   for (const e of groups.signals) lines.push(bullet(e));
+  lines.push("");
+
+  lines.push("## Who to talk to");
+  if (groups.people.length > 0) for (const e of groups.people) lines.push(bullet(e));
+  else lines.push("No evidence yet.");
   lines.push("");
 
   if (groups.company.length > 0) {
@@ -331,13 +336,14 @@ interface EvidenceGroups {
   company: Evidence[]; // resolve + enrich receipts (who they are)
   store: Evidence[];   // app-store receipts
   whyNow: Evidence[];  // intent receipts (timing signals)
+  people: Evidence[];  // people receipts (who to talk to)
 }
 
 const COMPANY_AGENTS = new Set(["resolve", "enrich"]);
 
 function groupEvidence(evidence: Evidence[]): EvidenceGroups {
   const seen = new Set<string>();
-  const groups: EvidenceGroups = { signals: [], company: [], store: [], whyNow: [] };
+  const groups: EvidenceGroups = { signals: [], company: [], store: [], whyNow: [], people: [] };
   // qualify first: its receipts are the scored signals, in signal order.
   const ordered = [
     ...evidence.filter((e) => e.agent === "qualify"),
@@ -349,6 +355,7 @@ function groupEvidence(evidence: Evidence[]): EvidenceGroups {
     if (seen.has(key)) continue;
     seen.add(key);
     if (e.agent === "intent") groups.whyNow.push(e);
+    else if (e.agent === "people") groups.people.push(e);
     else if (isStore(e)) groups.store.push(e);
     else if (COMPANY_AGENTS.has(e.agent)) groups.company.push(e);
     else groups.signals.push(e);

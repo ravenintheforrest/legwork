@@ -29,11 +29,12 @@ means writing a new pack (`packs/`), not new code.
 
 ```bash
 npm install
-npx tsx src/cli.ts demo          # full pipeline over recorded fixtures, offline, deterministic
+npx tsx src/cli.ts demo           # full pipeline over recorded fixtures, offline, deterministic
+npx tsx src/cli.ts report --open  # the fleet console: health, costs, evals, queue, briefs, memos
 npx tsx src/cli.ts status --costs
 npx tsx src/cli.ts show partiful
-npx tsx src/cli.ts review        # work the human-review queue
-npx tsx src/cli.ts evals         # score every unit against the hand-labeled golden set
+npx tsx src/cli.ts review --html  # judge briefs in the browser; record decisions via the CLI
+npx tsx src/cli.ts evals          # score every unit against the hand-labeled golden set
 ```
 
 Demo mode replays **real captured model output** from fixtures — authentic and
@@ -43,8 +44,12 @@ byte-identical on every run. Live mode needs a `GITHUB_TOKEN`; model briefs need
 
 ## The pipeline — deterministic where possible, a model only where judgment lives
 
-    discover → resolve → enrich → dedupe → qualify → intent → brief
-         (deterministic source adapters and entity logic)      (reasoning)
+    discover → resolve → enrich → dedupe → qualify → intent → people → brief
+         (deterministic source adapters and entity logic)               (reasoning)
+
+`people` is the "get personal" unit: top contributors to the account's Expo repo and their
+public profiles, so the brief gains a **Who to talk to** section and the opener addresses a
+named person about something they actually shipped — never an invented detail.
 
 Most of these units are ordinary, inspectable software: API calls, caching, validation,
 entity resolution, rubric scoring. Calling everything an "agent" would be a vanity metric.
@@ -79,6 +84,21 @@ legwork treats that as the product:
   records why in the decision record. Silent degradation is the failure mode this whole
   design is against.
 
+## Surfaces — terminal operates, browser shows, Slack delivers
+
+- **CLI** is the operator's cockpit and the only thing that acts: runs, reviews, retirements.
+- **The console** (`legwork report`) is a static page regenerated from the fleet's own
+  files — unit health with silent-fails made loud (a red dot is a unit whose last run did
+  not finish), spend, eval baseline, the review queue with staging buttons, published
+  briefs, retirement memos, run log. CI rebuilds and publishes it on every push.
+- **Slack** is the consumer surface: a brief that clears the gate or gets approved posts
+  its short form to an incoming webhook (`legwork notify`, or automatically on approve).
+  Without a webhook it prints what it would have sent — never a silent no-op.
+
+Decisions staged in the browser become one CLI command you paste. That keeps one control
+plane, and it keeps the answer to "what is the system allowed to do on its own?" in a file
+you can read (`autonomy_tiers` in `registry.yaml`) rather than in a UI you have to trust.
+
 ## What changes with first-party data
 
 Public repos, app-store listings, and job posts identify *hypotheses*, not account truth —
@@ -92,7 +112,7 @@ cost, and retirement architecture is the part that stays.
 
 - `legwork doctor` — bounded self-diagnosis from a failed run's compact error (propose-only)
 - Outcome ingestion — HubSpot stage adapter joining briefs to pipeline results
-- Static status report rendered from `data/runs.jsonl`
+- Deeper person research via Exa / Parallel as an adapter behind the same evidence contract
 - MCP server — legwork's functions are MCP-shaped by design (thin wrapper over the CLI verbs)
 
 ## Repo map

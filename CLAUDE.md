@@ -24,8 +24,8 @@ The harness is the product. Agents are cattle; the registry is the ranch.
    not the whole transcript.
 8. **Autonomy tiers are config** (registry `autonomy_tiers`), never vibes: fix / propose / human.
    Nothing send-side or credential-touching is ever below `human`.
-9. **Public data only.** Nothing from Vendr, no customer lists (CIIAA clean lane).
-   Excluded sources (Discord, LinkedIn scraping) stay excluded and documented.
+9. **Public data only.** No private data sources, no customer lists, nothing scraped from
+   behind a login. Excluded sources (Discord, LinkedIn scraping) stay excluded and documented.
 10. **No slop in anything user-facing**: no bento grids, gradient-blob heroes, sparkle icons,
     "It's not X, it's Y", fake numbers, or em-dash-studded AI prose. Terminal-monochrome report.
 

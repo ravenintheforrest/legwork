@@ -72,7 +72,7 @@ export async function runEvals(opts: EvalOptions = {}): Promise<void> {
 }
 
 // The pipeline, minus brief (which writes files):
-// discover -> discover-gitlab -> resolve -> enrich -> dedupe -> qualify.
+// discover -> discover-gitlab -> resolve -> enrich -> dedupe -> qualify -> people.
 async function scoreFixtures(pack: string): Promise<{ discovered: Account[]; state: Account[] }> {
   const ctx: RunContext = {
     pack,
@@ -92,6 +92,7 @@ async function scoreFixtures(pack: string): Promise<{ discovered: Account[]; sta
   state = mergeAccounts(state, await AGENTS.enrich!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.dedupe!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.qualify!.run(state, ctx));
+  state = mergeAccounts(state, await AGENTS.people!.run(state, ctx));
   return { discovered, state };
 }
 
@@ -107,8 +108,10 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
     { key: "qualify_segment", label: "qualify.segment", correct: 0, total: 0 },
     { key: "qualify_explanation", label: "qualify.explanation", correct: 0, total: 0 },
     { key: "dedupe_domains", label: "dedupe.domains", correct: 0, total: 0 },
+    { key: "people_presence", label: "people.presence", correct: 0, total: 0 },
   ];
-  const [presence, domain, enriched, verdict, segment, explanation, deduped] = metrics as [
+  const [presence, domain, enriched, verdict, segment, explanation, deduped, people] = metrics as [
+    Metric,
     Metric,
     Metric,
     Metric,
@@ -151,6 +154,12 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
       ) {
         explanation.correct += 1;
       }
+    }
+
+    // A qualified account is a good lead: people must have found someone to talk to.
+    if (row.verdict === "qualified") {
+      people.total += 1;
+      if (account?.evidence.some((e) => e.agent === "people")) people.correct += 1;
     }
 
     if (row.segment) {

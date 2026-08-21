@@ -64,3 +64,16 @@ One entry per working session: date, what happened, why it went that way.
   if Sunday is boring-stable; CUT status report, doctor, synthetic outcomes to next-steps.
 - New from peer review: cache-replay demo mode (authentic + unbreakable), regression gate
   must be recalibrated against model output, show the gate catching something as the climax.
+
+## 2026-08-21 (late night) — integrity item complete, retire shipped, README rewritten
+- LLM providers: SDK / claude-cli (subscription-powered) / replay + recording. 9 fable-tier
+  fixture briefs captured; demo replays them byte-identical, offline.
+- Citations gate proven by tamper test: uncited URL -> rejected, template fallback, reason
+  recorded in decision.json. Provider failures now loud on stderr.
+- `legwork retire` ships Codex's memo format; discover-gitlab verdict: RETIRE (0 of 9
+  briefs depended on it). Acting on it stays human-tier, by PR.
+- README rewritten concrete-first (Pinball Map excerpt before any architecture).
+- Second live run (90d window, model briefs on): 32 real accounts, 5 model-written briefs
+  over real evidence, all receipts resolve 200, all passed the citations gate, all queued
+  below the 0.80 confidence gate — real content for the review-queue demo beat.
+- Remaining before Monday: rehearsal script + two dress runs; MCP stub only if stable.

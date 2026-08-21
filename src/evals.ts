@@ -142,7 +142,7 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
       explanation.total += 1;
       const decision = account?.qualification;
       const contribution = decision?.signals.reduce((sum, signal) => sum + signal.contribution, 0) ?? NaN;
-      const expectedAction = row.verdict === "qualified" ? "brief" : "hold";
+      const expectedAction = row.verdict === "qualified" ? "brief" : account?.kind === "user" ? "exclude" : "hold";
       if (
         decision &&
         decision.action === expectedAction &&

@@ -99,7 +99,7 @@ function printDemoSummary(summary: RunSummary): void {
     ["by stage", stages.length ? stages.map(([k, n]) => `${k} ${n}`).join(" · ") : "none"],
     ["segments", segments.length ? segments.map(([k, n]) => `${k} ${n}`).join(" · ") : "none"],
     ["briefs", `${briefs} written to ${BRIEFS_DIR}/`],
-    ["cost", `$${cost.toFixed(4)} (fixture mode: no model calls)`],
+    ["cost", `$${cost.toFixed(4)} (fixture mode: offline; model briefs replayed from fixtures)`],
   ];
   for (const [label, value] of rows) console.log(`${label.padEnd(10)} ${value}`);
 }

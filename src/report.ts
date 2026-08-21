@@ -5,6 +5,10 @@
 // Why static: the operator surface is the terminal and the record of truth is git.
 // A page that reads those and stages decisions (review cards → one CLI command) gives
 // non-terminal humans the comfortable view without creating a second control plane.
+//
+// The same renderer has a served mode (`legwork serve`), which keeps every byte of the
+// static page and adds the buttons that call the local server. Static stays the Pages
+// artifact and the fallback: no toolbar, no fetch, nothing that needs a process running.
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -12,24 +16,94 @@ import { loadRegistry } from "./registry.js";
 import { readRuns } from "./runlog.js";
 import { loadAccounts } from "./store.js";
 import { readReviews } from "./review.js";
-import { esc, mdToHtml, renderQueueCards, shell, stageBar, stageScript } from "./reviewhtml.js";
+import { brainStyles, renderBrain } from "./brain.js";
+import {
+  esc,
+  mdToHtml,
+  renderQueueCards,
+  servedScript,
+  servedStyles,
+  shell,
+  stageBar,
+  stageScript,
+} from "./reviewhtml.js";
 import type { Account, RunRecord } from "./types.js";
 
 const SITE_DIR = "site";
 
-export function writeConsole(): string {
+export type Panels = {
+  overview: string;
+  queue: string;
+  briefs: string;
+  evals: string;
+  memos: string;
+  runs: string;
+  brain: string;
+};
+
+// The six panel bodies, on their own, so `/api/state` can swap them in place without a
+// reload. Served is the default here because the only caller that renders panels alone is
+// the local server; the static generator passes `served: false` explicitly below.
+export function renderPanels(opts: { served?: boolean } = {}): Panels {
+  const served = opts.served !== false;
   const registry = loadRegistry();
   const runs = readRuns();
   const accounts = loadAccounts();
   const reviews = readReviews();
   const queued = accounts.filter((a) => a.review?.status === "queued");
+
+  return {
+    overview: `
+  <p class="lead">Is the fleet healthy, what is it costing, and is anyone waiting on a human? A red dot is a unit whose last run did not finish — the silent-fail case, made loud.</p>
+  ${fleetSection(registry.agents, runs, accounts, reviews, served)}
+`,
+    queue: `
+  <p class="lead">Briefs below the confidence gate, waiting for a person. Read the brief, then the score math and the assumptions beside it — the assumptions are where you calibrate. ${
+    served
+      ? "Approve or reject records the decision on this machine, through the same code path as the CLI."
+      : "Approve or reject stages a decision; the command bar records it through the CLI."
+  }</p>
+  ${renderQueueCards(queued, { served })}
+${served ? "" : `  ${stageBar()}\n`}`,
+    briefs: `
+  <p class="lead">Briefs that cleared the gate or were approved. Every sentence carries its source.</p>
+  ${briefsSection(accounts, served)}
+`,
+    evals: `
+  <p class="lead">Every unit is scored against the hand-labeled golden set on each run; a score below this baseline fails CI.</p>
+  ${evalsSection(registry.pack)}
+`,
+    memos: `
+  <p class="lead">Units judged on their own run history: what was expected, what it cost, what only it produced, and the verdict.</p>
+  ${memosSection()}
+`,
+    runs: `
+  <p class="lead">The last 25 runs, newest first. Mode, outcome, in→out, time, spend, and the compact error if any.</p>
+  ${runsSection(runs)}
+`,
+    // renderBrain supplies its own lead — it reads config off disk at render time, so the
+    // panel is always describing the fleet as it is right now, not as it was when built.
+    brain: renderBrain({ served }),
+  };
+}
+
+// The whole page. `served: false` (the default) is the Pages artifact and must stay
+// byte-identical to what it has always been; `served: true` adds the operator affordances.
+export function renderConsole(opts: { served?: boolean } = {}): string {
+  const served = opts.served === true;
+  const runs = readRuns();
+  const accounts = loadAccounts();
+  const queued = accounts.filter((a) => a.review?.status === "queued");
   const generatedAt = new Date().toISOString().replace("T", " ").slice(0, 16) + "Z";
 
   const published = accounts.filter((a) => a.stage === "briefed" && (!a.review || a.review.status === "approved")).length;
   const memoCount = existsSync("memos") ? readdirSync("memos").filter((f) => f.endsWith(".md")).length : 0;
-  const body = `
+  const panels = renderPanels({ served });
+  const body = `${served ? banner() : ""}
 <div class="top"><span class="brand">legwork</span><h1>Fleet console</h1><span class="spacer"></span><button class="theme" id="theme">dark mode</button></div>
-<p class="sub">Generated ${generatedAt} from the fleet's own files. The terminal acts; this page shows.</p>
+<p class="sub">Generated ${generatedAt} from the fleet's own files. ${
+    served ? "Actions on this page run here, on your machine." : "The terminal acts; this page shows."
+  }</p>
 <div class="tabs">
   <button data-tab="overview">overview</button>
   <button data-tab="queue">review queue<span class="count">${queued.length}</span></button>
@@ -37,45 +111,53 @@ export function writeConsole(): string {
   <button data-tab="evals">evals</button>
   <button data-tab="memos">retirement memos<span class="count">${memoCount}</span></button>
   <button data-tab="runs">run log<span class="count">${runs.length}</span></button>
+  <button data-tab="brain">how it runs</button>
 </div>
+${served ? toolbar() : ""}
+<div class="panel" id="overview">${panels.overview}</div>
 
-<div class="panel" id="overview">
-  <p class="lead">Is the fleet healthy, what is it costing, and is anyone waiting on a human? A red dot is a unit whose last run did not finish — the silent-fail case, made loud.</p>
-  ${fleetSection(registry.agents, runs, accounts, reviews)}
-</div>
+<div class="panel" id="queue">${panels.queue}</div>
 
-<div class="panel" id="queue">
-  <p class="lead">Briefs below the confidence gate, waiting for a person. Read the brief, then the score math and the assumptions beside it — the assumptions are where you calibrate. Approve or reject stages a decision; the command bar records it through the CLI.</p>
-  ${renderQueueCards(queued)}
-  ${stageBar()}
-</div>
+<div class="panel" id="briefs">${panels.briefs}</div>
 
-<div class="panel" id="briefs">
-  <p class="lead">Briefs that cleared the gate or were approved. Every sentence carries its source.</p>
-  ${briefsSection(accounts)}
-</div>
+<div class="panel" id="evals">${panels.evals}</div>
 
-<div class="panel" id="evals">
-  <p class="lead">Every unit is scored against the hand-labeled golden set on each run; a score below this baseline fails CI.</p>
-  ${evalsSection(registry.pack)}
-</div>
+<div class="panel" id="memos">${panels.memos}</div>
 
-<div class="panel" id="memos">
-  <p class="lead">Units judged on their own run history: what was expected, what it cost, what only it produced, and the verdict.</p>
-  ${memosSection()}
-</div>
+<div class="panel" id="runs">${panels.runs}</div>
 
-<div class="panel" id="runs">
-  <p class="lead">The last 25 runs, newest first. Mode, outcome, in→out, time, spend, and the compact error if any.</p>
-  ${runsSection(runs)}
-</div>
+<div class="panel" id="brain">${panels.brain}</div>
 
 <footer class="page">legwork · <a href="https://github.com/ravenintheforrest/legwork">repo</a> · recomputed from files on each generation; nothing is cached in this page.</footer>`;
 
+  return served
+    ? shell("legwork fleet console", body, servedScript(), servedStyles() + brainStyles)
+    : shell("legwork fleet console", body, stageScript(), brainStyles);
+}
+
+export function writeConsole(): string {
   mkdirSync(SITE_DIR, { recursive: true });
   const file = join(SITE_DIR, "index.html");
-  writeFileSync(file, shell("legwork fleet console", body, stageScript()));
+  writeFileSync(file, renderConsole({ served: false }));
   return file;
+}
+
+// --- served-only chrome -------------------------------------------------------------
+
+function banner(): string {
+  return `\n<div class="opbanner">local operator desk — actions run on your machine</div>`;
+}
+
+function toolbar(): string {
+  return `<div class="toolbar">
+  <button data-run="fixture">Run demo</button>
+  <button data-run="live" data-since="90">Run live (90d)</button>
+  <button id="op-evals">Re-run evals</button>
+  <button id="op-refresh">Refresh</button>
+  <span class="chip" id="op-status" data-state="idle">idle</span>
+</div>
+<pre class="logpane" id="op-log" data-empty="1">— no run yet —</pre>
+`;
 }
 
 // --- sections -----------------------------------------------------------------------
@@ -85,6 +167,7 @@ function fleetSection(
   runs: RunRecord[],
   accounts: Account[],
   reviews: { decision: string; confidence: number }[],
+  served = false,
 ): string {
   const names = Object.keys(agents);
   const briefed = accounts.filter((a) => a.stage === "briefed").length;
@@ -108,7 +191,7 @@ function fleetSection(
         <td class="num">${errors}</td>
         <td>${last ? esc(last.started.slice(0, 16).replace("T", " ")) : "—"}</td>
         <td>${esc(state)}</td>
-        <td class="num">$${cost.toFixed(4)}</td>
+        <td class="num">$${cost.toFixed(4)}</td>${served ? `\n        <td class="rowact"><button data-retire="${esc(name)}">retire</button></td>` : ""}
       </tr>`;
     })
     .join("");
@@ -122,8 +205,8 @@ function fleetSection(
   <div class="kpi"><div class="v">$${totalCost.toFixed(2)}</div><div class="k">model spend, all runs</div></div>
   <div class="kpi"><div class="v">${acceptance}</div><div class="k">review acceptance (${reviews.length} decisions)</div></div>
 </div>
-<table><tr><th>unit</th><th>does</th><th>runs</th><th>failed</th><th>last run</th><th>last outcome</th><th>spend</th></tr>${rows}</table>
-<p class="sub" style="margin-top:8px">Amber: last run ok, but it has failed before.</p>
+<table><tr><th>unit</th><th>does</th><th>runs</th><th>failed</th><th>last run</th><th>last outcome</th><th>spend</th>${served ? "<th></th>" : ""}</tr>${rows}</table>
+<p class="sub" style="margin-top:8px">Amber: last run ok, but it has failed before.${served ? " Retire writes the memo and opens it below; the PR is still yours to open." : ""}</p>${served ? `\n<div id="retire-out"></div>` : ""}
 </section>`;
 }
 
@@ -139,14 +222,17 @@ function evalsSection(pack: string): string {
 </section>`;
 }
 
-function briefsSection(accounts: Account[]): string {
+function briefsSection(accounts: Account[], served = false): string {
   const published = accounts.filter((a) => a.stage === "briefed" && (!a.review || a.review.status === "approved"));
   if (published.length === 0) return `<section class="block" id="briefs"><h2>Published briefs</h2><p class="empty">none yet — everything is in the review queue.</p></section>`;
   const items = published
     .map((a) => {
       const f = join("briefs", `${a.org}.md`);
       const md = existsSync(f) ? readFileSync(f, "utf8") : "(brief file missing)";
-      return `<details><summary>${esc(a.company ?? a.org)} — segment ${esc(a.segment ?? "?")} · confidence ${(a.confidence ?? 0).toFixed(2)}</summary><div class="memo">${mdToHtml(md)}</div></details>`;
+      const send = served
+        ? `<div class="briefact"><button data-notify="${esc(a.org)}">Send to Slack</button><span class="note"></span></div>`
+        : "";
+      return `<details><summary>${esc(a.company ?? a.org)} — segment ${esc(a.segment ?? "?")} · confidence ${(a.confidence ?? 0).toFixed(2)}</summary>${send}<div class="memo">${mdToHtml(md)}</div></details>`;
     })
     .join("\n");
   return `<section class="block" id="briefs"><h2>Published briefs</h2>${items}</section>`;

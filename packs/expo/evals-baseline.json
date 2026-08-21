@@ -1,5 +1,6 @@
 {
   "discover": 1,
+  "discover_jobs": 1,
   "resolve_domain": 1,
   "enrich_presence": 1,
   "qualify_verdict": 1,

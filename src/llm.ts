@@ -139,7 +139,9 @@ class ClaudeCliLLM implements LLM {
   }
 }
 
-class ReplayLLM implements LLM {
+// Exported for the test suite only: both take a fixture directory so a test can point
+// them at a temp dir instead of the repo's fixtures/llm. Behavior and defaults unchanged.
+export class ReplayLLM implements LLM {
   readonly kind = "replay" as const;
   constructor(private readonly dir = REPLAY_DIR) {}
 
@@ -152,7 +154,7 @@ class ReplayLLM implements LLM {
   }
 }
 
-class RecordingLLM implements LLM {
+export class RecordingLLM implements LLM {
   constructor(
     private readonly inner: LLM,
     private readonly dir = REPLAY_DIR,

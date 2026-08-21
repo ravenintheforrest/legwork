@@ -13,10 +13,21 @@ type SignalName =
   | "repo_activity"
   | "store_review_volume"
   | "store_update_cadence"
-  | "regulated_industry";
+  | "regulated_industry"
+  | "hiring_signal";
 
+// Weights sum to 1.00: the maximum possible score is the top of the scale, always.
+//
+// Rebalance 2026-08-21, adding hiring_signal at 0.10: the 0.10 came out of
+// eas_json_present (0.30 -> 0.20). That signal is already the hard gate below — no
+// eas.json, no qualification, whatever the score — so carrying 30% of the score as well
+// counted the same fact twice. Every qualified account scores 1 on it, so the trim
+// moves them all by the same -0.10: it cannot reorder them and it cannot flip a
+// verdict. The lowest-scoring qualified account in the golden set lands at 0.60, still
+// clear of the 0.55 threshold, and no held account can rise, because the only weight
+// that grew is one they have no evidence for.
 const WEIGHTS: Record<SignalName, number> = {
-  eas_json_present: 0.3,
+  eas_json_present: 0.2,
   rn_version_recency: 0.1,
   ci_config: 0.1,
   team_size_signals: 0.1,
@@ -24,6 +35,7 @@ const WEIGHTS: Record<SignalName, number> = {
   store_review_volume: 0.1,
   store_update_cadence: 0.1,
   regulated_industry: 0.05,
+  hiring_signal: 0.1,
 };
 
 const QUALIFY_AT = 0.55;
@@ -217,7 +229,19 @@ async function scoreAccount(
     };
   }
 
-  return [eas, rn, ci, team, activity, reviews, cadence, regulated];
+  // --- hiring_signal: a public job post naming Expo/EAS/React Native is production
+  // evidence and budget evidence at once — the channel that reaches companies whose app
+  // repo is private. Scoped to discover-jobs' own receipts so the score is reproducible
+  // from one named source; no post observed is 0 and an assumption, never known-false.
+  const post = account.evidence.find((e) => e.agent === "discover-jobs");
+  const hiring: Signal = { name: "hiring_signal", score: post ? 1 : 0 };
+  if (post) {
+    // Same claim and URL as discover-jobs' receipt, so a brief rendering both shows the
+    // fact once — the convention eas_json_present already follows.
+    hiring.evidence = { claim: post.claim, url: post.url, agent: "qualify", date };
+  }
+
+  return [eas, rn, ci, team, activity, reviews, cadence, regulated, hiring];
 }
 
 function segmentOf(profile: OrgProfile | null, signals: Signal[]): Segment {

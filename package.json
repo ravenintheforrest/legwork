@@ -3,12 +3,18 @@
   "version": "0.1.0",
   "description": "A GTM agent fleet with an operating harness: evals, self-healing, retirement, and briefs with receipts. The fleet does the legwork.",
   "type": "module",
-  "bin": { "legwork": "./dist/cli.js" },
+  "bin": {
+    "legwork": "./dist/cli.js"
+  },
   "scripts": {
     "dev": "tsx src/cli.ts",
     "build": "tsc",
     "evals": "tsx src/cli.ts evals",
-    "mcp": "tsx src/mcp.ts"
+    "mcp": "tsx src/mcp.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:sealed": "tsx test/sealed-run.ts",
+    "selftest": "tsx src/cli.ts selftest",
+    "typecheck": "tsc --noEmit && tsc -p test --noEmit"
   },
   "license": "MIT",
   "dependencies": {

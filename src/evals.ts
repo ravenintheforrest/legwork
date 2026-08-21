@@ -15,7 +15,13 @@ import type { Account, RunContext } from "./types.js";
 
 interface GoldenRow {
   org: string;
-  verdict: "qualified" | "unqualified" | "exclude";
+  // "lead" is a company a discovery channel is expected to surface but that the
+  // pipeline cannot score yet — no public GitHub org, so no qualification decision to
+  // grade. Presence is the only claim the golden set can honestly make about it.
+  verdict: "qualified" | "unqualified" | "exclude" | "lead";
+  // Which discovery channel is expected to find the row. Absent means the code-search
+  // channel (`discover`), which is where every row before discover-jobs came from.
+  source?: "code" | "jobs";
   segment?: string;
   domain?: string;
   why?: string;
@@ -43,8 +49,8 @@ export async function runEvals(opts: EvalOptions = {}): Promise<void> {
   const baselinePath = opts.baselinePath ?? join(registry.pack, "evals-baseline.json");
 
   const golden = readGolden(goldenPath);
-  const { discovered, state } = await scoreFixtures(registry.pack);
-  const metrics = score(golden, discovered, state);
+  const { discovered, fromJobs, state } = await scoreFixtures(registry.pack);
+  const metrics = score(golden, discovered, fromJobs, state);
   const scores = Object.fromEntries(metrics.map((m) => [m.key, ratio(m)]));
 
   if (!existsSync(baselinePath) || opts.updateBaseline) {
@@ -72,8 +78,11 @@ export async function runEvals(opts: EvalOptions = {}): Promise<void> {
 }
 
 // The pipeline, minus brief (which writes files):
-// discover -> discover-gitlab -> resolve -> enrich -> dedupe -> qualify -> people.
-async function scoreFixtures(pack: string): Promise<{ discovered: Account[]; state: Account[] }> {
+// discover -> discover-jobs -> discover-gitlab -> resolve -> enrich -> dedupe ->
+// qualify -> people.
+async function scoreFixtures(
+  pack: string,
+): Promise<{ discovered: Account[]; fromJobs: Account[]; state: Account[] }> {
   const ctx: RunContext = {
     pack,
     mode: "fixture",
@@ -87,21 +96,30 @@ async function scoreFixtures(pack: string): Promise<{ discovered: Account[]; sta
 
   const discovered = await AGENTS.discover!.run([], ctx);
   let state = mergeAccounts([], discovered);
+  const fromJobs = await AGENTS["discover-jobs"]!.run(state, ctx);
+  state = mergeAccounts(state, fromJobs);
   state = mergeAccounts(state, await AGENTS["discover-gitlab"]!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.resolve!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.enrich!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.dedupe!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.qualify!.run(state, ctx));
   state = mergeAccounts(state, await AGENTS.people!.run(state, ctx));
-  return { discovered, state };
+  return { discovered, fromJobs, state };
 }
 
-function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Metric[] {
+function score(
+  golden: GoldenRow[],
+  discovered: Account[],
+  fromJobs: Account[],
+  state: Account[],
+): Metric[] {
   const found = new Set(discovered.map((a) => a.org));
+  const foundByJobs = new Set(fromJobs.map((a) => a.org));
   const byOrg = new Map(state.map((a) => [a.org, a]));
 
   const metrics: Metric[] = [
     { key: "discover", label: "discover.presence", correct: 0, total: 0 },
+    { key: "discover_jobs", label: "discover_jobs.presence", correct: 0, total: 0 },
     { key: "resolve_domain", label: "resolve.domain", correct: 0, total: 0 },
     { key: "enrich_presence", label: "enrich.presence", correct: 0, total: 0 },
     { key: "qualify_verdict", label: "qualify.verdict", correct: 0, total: 0 },
@@ -110,23 +128,23 @@ function score(golden: GoldenRow[], discovered: Account[], state: Account[]): Me
     { key: "dedupe_domains", label: "dedupe.domains", correct: 0, total: 0 },
     { key: "people_presence", label: "people.presence", correct: 0, total: 0 },
   ];
-  const [presence, domain, enriched, verdict, segment, explanation, deduped, people] = metrics as [
-    Metric,
-    Metric,
-    Metric,
-    Metric,
-    Metric,
-    Metric,
-    Metric,
-    Metric,
-  ];
+  const [presence, jobs, domain, enriched, verdict, segment, explanation, deduped, people] =
+    metrics as [Metric, Metric, Metric, Metric, Metric, Metric, Metric, Metric, Metric];
 
   for (const row of golden) {
     const account = byOrg.get(row.org);
 
-    presence.total += 1;
-    const shouldBeFound = row.verdict !== "exclude";
-    if (found.has(row.org) === shouldBeFound) presence.correct += 1;
+    // Each discovery channel is graded on its own beat: code search is not asked to
+    // find a company whose only public trace is a job post, and the jobs channel is
+    // wrong if it invents an account for anyone it was not told about.
+    if (row.source !== "jobs") {
+      presence.total += 1;
+      const shouldBeFound = row.verdict !== "exclude";
+      if (found.has(row.org) === shouldBeFound) presence.correct += 1;
+    }
+
+    jobs.total += 1;
+    if (foundByJobs.has(row.org) === (row.source === "jobs")) jobs.correct += 1;
 
     if (row.domain) {
       domain.total += 1;

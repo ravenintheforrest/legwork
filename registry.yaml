@@ -14,6 +14,17 @@ agents:
     does: find repos and packages depending on Expo
     sources: [github_code_search, npm_dependents]
     output: candidates.jsonl
+  discover-jobs:
+    does: 'find companies hiring React Native / Expo engineers in HN "Ask HN: Who is hiring?" threads'
+    sources: [hn_algolia]
+    output: candidates.jsonl
+    hypothesis: >
+      public code search only sees repos, and the companies running Expo in production
+      keep their app repos private — so the eas.json sweep returns mostly hobbyists.
+      A job post naming Expo/EAS/React Native is production evidence and budget evidence
+      in one public signal. Expect this channel to contribute the majority of net-new
+      accounts that carry a company name and a domain, at the cost of arriving without
+      repos: most will sit at discovered until a public org turns up.
   discover-gitlab:
     does: probe GitLab public projects for Expo usage
     sources: [gitlab_projects]
@@ -33,7 +44,7 @@ agents:
     output: accounts.jsonl
   qualify:
     does: score production usage and segment (A mobile-first / B app-as-channel / C JS-forward org / D agency)
-    signals: [eas_json, store_links, ci_config, rn_version_recency, repo_activity, store_review_volume, store_update_cadence]
+    signals: [eas_json, store_links, ci_config, rn_version_recency, repo_activity, store_review_volume, store_update_cadence, hiring_signal]
     output: accounts.jsonl
   intent:
     does: recent signals — EAS/build issues, upgrade PRs, RN job posts

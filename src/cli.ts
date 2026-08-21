@@ -14,6 +14,7 @@ import { runRetire } from "./retire.js";
 import { writeReviewPage } from "./reviewhtml.js";
 import { writeConsole } from "./report.js";
 import { notifyBrief } from "./notify.js";
+import { startServer } from "./serve.js";
 import { spawn } from "node:child_process";
 import type { Account, RunRecord } from "./types.js";
 
@@ -105,6 +106,26 @@ program.command("report").description("generate the static fleet console (site/i
     const file = writeConsole();
     console.log(`console written: ${file}`);
     if (options.open) spawn("open", [file], { stdio: "ignore", detached: true }).unref();
+  });
+
+program.command("serve").description("local operator desk: the console, but the buttons act (127.0.0.1)")
+  .option("--port <n>", "port to bind", String(4317))
+  .option("--no-open", "do not open the browser")
+  .action(async (options: { port: string; open: boolean }) => {
+    const port = Number.parseInt(options.port, 10);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      throw new Error(`--port must be a number between 1 and 65535 (got "${options.port}")`);
+    }
+    await startServer({ port, open: options.open });
+  });
+
+program.command("selftest").description("the harness checks itself end to end — offline, no credentials")
+  .option("--only <substring>", "run only the checks whose name contains this")
+  .action(async (options: { only?: string }) => {
+    // Lazy import: selftest drags in a temp-working-copy toolchain no other verb needs.
+    const { runSelftest } = await import("./selftest.js");
+    const code = await runSelftest({ only: options.only });
+    if (code !== 0) process.exitCode = code;
   });
 
 program.command("notify").description("post a published brief's Slack-shaped form to SLACK_WEBHOOK_URL")

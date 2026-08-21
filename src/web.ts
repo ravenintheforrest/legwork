@@ -157,6 +157,8 @@ export interface HnResult {
 }
 
 const HN_API = "https://hn.algolia.com/api/v1/search";
+const HN_PAGE_SIZE = 100;
+const DAY_MS = 86_400_000;
 
 export class HnClient {
   private readonly mode: FetchMode;
@@ -177,5 +179,27 @@ export class HnClient {
     }
     const url = `${HN_API}?query=${encodeURIComponent(query)}&tags=comment`;
     return (await this.fetcher.json<HnResult>(url)) ?? { hits: [] };
+  }
+
+  // "Ask HN: Who is hiring?" is a channel, not an account, so it gets one fixture for
+  // the whole sweep (fixtures/hn/whoishiring.json) rather than one file per org. As
+  // with search(), fixture mode replays that one recording whatever the query was.
+  // sinceDays > 0 bounds the live sweep to recent threads; the cutoff is floored to a
+  // UTC day so the URL — and therefore the cache key — is stable within a day.
+  // Fixture mode ignores the window entirely, so the demo stays deterministic.
+  async whoIsHiring(query: string, sinceDays = 0): Promise<HnResult> {
+    if (this.mode === "fixture") {
+      return readJson<HnResult>(join(this.fixtureDir, "hn", "whoishiring.json")) ?? { hits: [] };
+    }
+    const params = [
+      `query=${encodeURIComponent(query)}`,
+      "tags=comment",
+      `hitsPerPage=${HN_PAGE_SIZE}`,
+    ];
+    if (sinceDays > 0) {
+      const cutoff = Math.floor((Date.now() - sinceDays * DAY_MS) / DAY_MS) * (DAY_MS / 1000);
+      params.push(`numericFilters=${encodeURIComponent(`created_at_i>${cutoff}`)}`);
+    }
+    return (await this.fetcher.json<HnResult>(`${HN_API}?${params.join("&")}`)) ?? { hits: [] };
   }
 }

@@ -12,3 +12,7 @@
 {"org":"acme-mobile","verdict":"unqualified","why":"archived app, RN 0.64, no store presence","labeled_by":"bootstrap","date":"2026-08-20"}
 {"org":"partiful-app","verdict":"unqualified","why":"duplicate org spelling of partiful (same domain); dedupe merges its receipts into partiful and drops its confidence","labeled_by":"bootstrap","date":"2026-08-20"}
 {"org":"mika-hobbyist","verdict":"exclude","why":"GitLab personal namespace — the marginal discover-gitlab hit that never resolves to a company","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"incident.io","verdict":"unqualified","source":"jobs","why":"job-post spelling of incident-io (same domain); dedupe merges its hiring receipt into incident-io and drops its confidence","labeled_by":"bootstrap","date":"2026-08-21"}
+{"org":"mollie.com","verdict":"lead","source":"jobs","why":"payments company hiring a React Native mobile engineer on HN; no public Expo repo, so it stays a lead until an org resolves","labeled_by":"bootstrap","date":"2026-08-21"}
+{"org":"ramp.com","verdict":"lead","source":"jobs","why":"posts an Expo/EAS mobile role with a salary band; budget evidence with no public repo behind it","labeled_by":"bootstrap","date":"2026-08-21"}
+{"org":"northwind-health","verdict":"lead","source":"jobs","why":"job post links an applicant-tracking host, not a company domain, so the account is keyed by company name","labeled_by":"bootstrap","date":"2026-08-21"}

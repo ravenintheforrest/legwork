@@ -3,6 +3,7 @@
 
 import type { AgentDef } from "../types.js";
 import { discover } from "./discover.js";
+import { discoverJobs } from "./discover-jobs.js";
 import { discoverGitlab } from "./discover-gitlab.js";
 import { resolve } from "./resolve.js";
 import { enrich } from "./enrich.js";
@@ -14,6 +15,7 @@ import { brief } from "./brief.js";
 
 export const AGENTS: Record<string, AgentDef> = {
   discover,
+  "discover-jobs": discoverJobs,
   "discover-gitlab": discoverGitlab,
   resolve,
   enrich,
@@ -24,4 +26,4 @@ export const AGENTS: Record<string, AgentDef> = {
   brief,
 };
 
-export const PIPELINE = ["discover", "discover-gitlab", "resolve", "enrich", "dedupe", "qualify", "intent", "people", "brief"];
+export const PIPELINE = ["discover", "discover-jobs", "discover-gitlab", "resolve", "enrich", "dedupe", "qualify", "intent", "people", "brief"];

@@ -21,6 +21,7 @@ export interface Account {
   repos?: string[];            // github full_names, sorted — set by discover
   kind?: "org" | "user";       // set by resolve; user accounts never qualify
   review?: ReviewState;        // present once a brief entered the HITL gate
+  qualification?: QualificationDecision; // inspectable score contract; never a black-box number
 }
 
 // HITL loop state (F7): briefs below the registry's confidence_gate queue for a human;
@@ -35,6 +36,26 @@ export interface Evidence {
   url: string;
   agent: string;
   date: string;
+}
+
+// The qualification score is a decision record, not an oracle. Every contribution is
+// visible, missing public evidence is explicit, and the fallback says what happens next.
+export interface QualificationSignal {
+  name: string;
+  value: number;               // normalized 0..1 signal value
+  weight: number;              // share of the total score
+  contribution: number;        // value * weight
+  evidence_url?: string;       // absent means "not observed", never "known false"
+}
+
+export interface QualificationDecision {
+  score: number;
+  threshold: number;
+  qualified: boolean;
+  action: "brief" | "hold" | "exclude";
+  signals: QualificationSignal[];
+  assumptions: string[];
+  fallback: string;
 }
 
 export interface RunRecord {

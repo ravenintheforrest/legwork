@@ -1,15 +1,41 @@
 name: fleet
 on:
+  push:
+    branches: [main]
   workflow_dispatch: {}
   schedule:
     - cron: "0 10 * * *"   # daily 6am ET — the fleet runs itself in public
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  run:
+  gate-and-console:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      # - run: npm ci && npm run build
-      # - run: node dist/cli.js run --since 1d && node dist/cli.js report
-      - run: echo "scaffold — wired up when the runner lands"
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      # The regression gate: a score below baseline fails this job (and the PR).
+      - run: npx tsx src/cli.ts evals
+      # The demo must always work offline and deterministically.
+      - run: npx tsx src/cli.ts demo
+      # The console is a window onto the files the fleet keeps; publish it.
+      - run: npx tsx src/cli.ts report
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+
+  deploy-console:
+    needs: gate-and-console
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

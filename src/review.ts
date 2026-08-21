@@ -34,6 +34,12 @@ export async function runReview(opts: {
     if (!account) throw new Error(`no queued brief for "${org}" (see \`legwork review\`)`);
     decide(account, opts.approve ? "approved" : "rejected", accounts);
     console.log(`${org}: ${opts.approve ? "approved — brief published" : "rejected — brief stays out of briefs/"}`);
+    if (opts.approve) {
+      // Approval is the moment the consumer surface gets the brief: Slack if wired, else say so.
+      const { notifyBrief } = await import("./notify.js");
+      const result = await notifyBrief(org);
+      if (result === "posted") console.log(`${org}: posted to Slack`);
+    }
     return;
   }
 

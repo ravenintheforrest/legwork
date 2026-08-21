@@ -11,6 +11,9 @@ import { runPipeline, type RunSummary } from "./runner.js";
 import { runReview } from "./review.js";
 import { runRetire } from "./retire.js";
 import { writeReviewPage } from "./reviewhtml.js";
+import { writeConsole } from "./report.js";
+import { notifyBrief } from "./notify.js";
+import { spawn } from "node:child_process";
 import type { Account, RunRecord } from "./types.js";
 
 const ACCOUNTS_FILE = "data/accounts.jsonl";
@@ -90,7 +93,21 @@ program.command("retire").description("retirement memo for one agent, from its r
   .action((agent: string) => {
     runRetire(agent);
   });
-program.command("report").description("generate the static status report").action(todo("report"));
+program.command("report").description("generate the static fleet console (site/index.html)")
+  .option("--open", "open it in the browser after generating")
+  .action((options: { open?: boolean }) => {
+    const file = writeConsole();
+    console.log(`console written: ${file}`);
+    if (options.open) spawn("open", [file], { stdio: "ignore", detached: true }).unref();
+  });
+
+program.command("notify").description("post a published brief's Slack-shaped form to SLACK_WEBHOOK_URL")
+  .argument("<org>")
+  .action(async (org: string) => {
+    const result = await notifyBrief(org);
+    if (result === "missing") throw new Error(`no published brief for "${org}" (is it still in the review queue?)`);
+    console.log(result === "posted" ? `${org}: posted to Slack` : `${org}: printed (set SLACK_WEBHOOK_URL to post)`);
+  });
 
 program.parseAsync().catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);

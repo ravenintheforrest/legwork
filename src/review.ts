@@ -42,16 +42,28 @@ export async function runReview(opts: {
     return;
   }
 
-  console.log(`${queued.length} brief(s) queued below the confidence gate\n`);
+  console.log(`${queued.length} brief(s) queued below the confidence gate`);
+  console.log(`keys: [a]pprove · [r]eject · [v]iew full brief · [s]kip · [q]uit\n`);
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    for (const account of queued) {
+    outer: for (const account of queued) {
       const slack = join(QUEUE_DIR, `${account.org}.slack.txt`);
       console.log("─".repeat(60));
       console.log(existsSync(slack) ? readFileSync(slack, "utf8").trim() : `${account.org} (no rendered brief found)`);
-      const answer = (await rl.question("\n[a]pprove / [r]eject / [s]kip > ")).trim().toLowerCase();
-      if (answer === "a") decide(account, "approved", accounts);
-      else if (answer === "r") decide(account, "rejected", accounts);
+      for (;;) {
+        const answer = (await rl.question("\n[a]pprove / [r]eject / [v]iew / [s]kip / [q]uit > ")).trim().toLowerCase();
+        if (answer === "a") { decide(account, "approved", accounts); break; }
+        if (answer === "r") { decide(account, "rejected", accounts); break; }
+        if (answer === "s") break;
+        if (answer === "q") break outer;
+        if (answer === "v") {
+          const full = join(QUEUE_DIR, `${account.org}.md`);
+          console.log("");
+          console.log(existsSync(full) ? readFileSync(full, "utf8") : "(no full brief found)");
+          continue;
+        }
+        console.log(`  ? "${answer}" is not a key here — a, r, v, s, or q. Nothing was decided.`);
+      }
       console.log("");
     }
   } finally {

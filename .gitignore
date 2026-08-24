@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.env
+*.local
+.DS_Store
+data/
+# Live model captures are quarantined here and must never be promoted implicitly.
+data/captures/
+briefs/
+
+site/
+
+.ua/
+
+# Understand-Anything scratch that once escaped into the repo root
+undefined/
+
+# foglamp scan (edit token is a secret)
+.foglamp/
+SESSIONS.md
+
+# Saved live worlds (legwork save) — local only, never checked in
+snapshots/

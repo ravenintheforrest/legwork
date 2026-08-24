@@ -1,0 +1,13 @@
+{
+  "_note": "authored fixture — sample data",
+  "login": "beatgig",
+  "type": "Organization",
+  "name": "BeatGig",
+  "blog": "https://beatgig.com",
+  "description": "BeatGig is a live music booking marketplace. Artists list availability, colleges and venues book the show, and both sides manage the night from the app.",
+  "html_url": "https://github.com/beatgig",
+  "public_repos": 6,
+  "followers": 22,
+  "created_at": "2018-11-08T00:00:00Z",
+  "location": "New York, NY"
+}

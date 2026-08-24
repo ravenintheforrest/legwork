@@ -1,0 +1,11 @@
+{
+  "_note": "authored fixture — fictional org and people by design",
+  "items": [
+    {
+      "login": "hobbydev-example",
+      "html_url": "https://github.com/hobbydev-example",
+      "contributions": 57,
+      "type": "User"
+    }
+  ]
+}

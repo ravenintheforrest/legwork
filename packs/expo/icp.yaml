@@ -1,0 +1,22 @@
+# Who Expo monetizes (grounded in EAS pricing: builds, update MAUs, concurrency, enterprise compliance)
+thesis: org where a React Native app is a revenue-critical surface, maintained by a JS-first team, shipping fast
+segments:
+  A: { name: mobile-first startup,      example: Partiful,   tell: app is the product; no native team by design }
+  B: { name: app-as-channel mid/ent,    example: Mollie,     tell: web-strength org extends to mobile; compliance pressure }
+  C: { name: JS-forward established org, example: MTA,       tell: OTA speed is the wedge }
+  D: { name: agency/studio,             example: "-",        tell: "one org, many store developer accounts; build volume" }
+signals:
+  # 2026-08-23: production_evidence (was eas_json_present) is the gate and now has three
+  # public sources — eas.json in a repo, a job post by the company naming Expo/EAS, an Expo
+  # tracker issue by someone listing the company. hiring_signal 0.10 -> 0.20, taken from
+  # rn_version_recency and ci_config (repo-only). Weights sum to 1.00 — src/agents/qualify.ts.
+  fit: [production_evidence, rn_version_recency, ci_config, team_size_signals, hiring_signal]
+  scale: [store_review_volume]        # public MAU proxy — EAS bills on MAUs
+  velocity: [store_update_cadence]    # public build/OTA proxy — EAS bills on builds
+  compliance: [regulated_industry]    # enterprise-tier pressure
+
+# The qualification bar: production evidence AND a weighted score at or above this. Moved
+# here 2026-08-23 so the console can tune it — it is ICP judgment, not code. The publish
+# gate (what skips review) lives in registry.yaml loops.review.confidence_gate.
+thresholds:
+  qualify_at: 0.50

@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — duplicate-spelling org by design: same domain as partiful, exists to exercise dedupe",
+  "login": "partiful-app",
+  "type": "Organization",
+  "name": "Partiful",
+  "blog": "https://partiful.com",
+  "description": "Older org spelling for Partiful mobile work. Authored duplicate in the legwork fixture set.",
+  "html_url": "https://github.com/partiful-app",
+  "public_repos": 2,
+  "followers": 4,
+  "created_at": "2019-10-02T00:00:00Z"
+}

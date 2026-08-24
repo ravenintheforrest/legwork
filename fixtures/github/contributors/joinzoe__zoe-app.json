@@ -1,0 +1,23 @@
+{
+  "_note": "authored fixture — placeholder people by design (no real person is depicted); recorded shape of GET /repos/{owner}/{repo}/contributors, wrapped for the note",
+  "items": [
+    {
+      "login": "joinzoe-maintainer-1",
+      "html_url": "https://github.com/joinzoe-maintainer-1",
+      "contributions": 121,
+      "type": "User"
+    },
+    {
+      "login": "joinzoe-maintainer-2",
+      "html_url": "https://github.com/joinzoe-maintainer-2",
+      "contributions": 70,
+      "type": "User"
+    },
+    {
+      "login": "joinzoe-maintainer-3",
+      "html_url": "https://github.com/joinzoe-maintainer-3",
+      "contributions": 28,
+      "type": "User"
+    }
+  ]
+}

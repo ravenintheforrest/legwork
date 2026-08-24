@@ -1,0 +1,19 @@
+{
+  "_note": "authored fixture — sample data",
+  "name": "package.json",
+  "path": "package.json",
+  "type": "file",
+  "html_url": "https://github.com/ongoody/goody-app/blob/main/package.json",
+  "content": {
+    "name": "goody-app",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+      "expo": "~50.0.19",
+      "react": "18.2.0",
+      "react-native": "~0.73.6",
+      "expo-image": "~1.12.15",
+      "expo-secure-store": "~13.0.2"
+    }
+  }
+}

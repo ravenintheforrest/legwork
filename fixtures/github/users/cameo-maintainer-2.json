@@ -1,0 +1,14 @@
+{
+  "_note": "authored fixture — placeholder person by design (no real person is depicted); recorded shape of GET /users/{login}",
+  "login": "cameo-maintainer-2",
+  "type": "User",
+  "name": "Maintainer Two",
+  "company": "Cameo",
+  "blog": "https://cameo.com",
+  "location": "New York, NY",
+  "bio": "React Native developer on the Cameo mobile team. EAS builds and releases for the Cameo app.",
+  "html_url": "https://github.com/cameo-maintainer-2",
+  "public_repos": 13,
+  "followers": 30,
+  "created_at": "2016-03-01T00:00:00Z"
+}

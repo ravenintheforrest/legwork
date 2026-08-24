@@ -1,0 +1,35 @@
+{
+  "_note": "authored fixture — placeholder people by design (no real person is depicted); recorded shape of GET /repos/{owner}/{repo}/contributors, wrapped for the note",
+  "items": [
+    {
+      "login": "cameo-maintainer-1",
+      "html_url": "https://github.com/cameo-maintainer-1",
+      "contributions": 203,
+      "type": "User"
+    },
+    {
+      "login": "cameo-maintainer-2",
+      "html_url": "https://github.com/cameo-maintainer-2",
+      "contributions": 151,
+      "type": "User"
+    },
+    {
+      "login": "dependabot[bot]",
+      "html_url": "https://github.com/apps/dependabot",
+      "contributions": 24,
+      "type": "Bot"
+    },
+    {
+      "login": "cameo-maintainer-3",
+      "html_url": "https://github.com/cameo-maintainer-3",
+      "contributions": 77,
+      "type": "User"
+    },
+    {
+      "login": "cameo-maintainer-4",
+      "html_url": "https://github.com/cameo-maintainer-4",
+      "contributions": 30,
+      "type": "User"
+    }
+  ]
+}

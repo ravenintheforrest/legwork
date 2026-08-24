@@ -1,0 +1,54 @@
+{
+  "_note": "authored fixture — sample data; recorded shape of hn.algolia.com/api/v1/search?tags=comment over 'Ask HN: Who is hiring?' threads. Deliberately mixed: four parseable company posts (one keyed by an applicant-tracking URL, one a duplicate of the incident-io cast member), one unparseable prose comment, one comment from the wrong thread, one role with no Expo/React Native mention.",
+  "hits": [
+    {
+      "objectID": "45311204",
+      "story_title": "Ask HN: Who is hiring? (August 2026)",
+      "comment_text": "<p>Mollie | Amsterdam, NL or Lisbon, PT | Senior Mobile Engineer (React Native) | HYBRID | https://www.mollie.com/careers</p><p>We are a payments company and our merchant app is React Native end to end. You would own the release train and the EAS build pipeline. Dutch or Portuguese work authorization required.</p>",
+      "author": "mollie_eng",
+      "created_at": "2026-08-04T09:12:00Z"
+    },
+    {
+      "objectID": "45311377",
+      "story_title": "Ask HN: Who is hiring? (August 2026)",
+      "comment_text": "<p>Ramp | New York, NY | Mobile Engineer, Expo / EAS | REMOTE (US) | $190k - $240k + equity | https://ramp.com/careers</p><p>Our card and expense app ships on Expo with EAS Update. Looking for someone who has run a React Native app at real volume.</p>",
+      "author": "ramp_hiring",
+      "created_at": "2026-08-04T11:47:00Z"
+    },
+    {
+      "objectID": "45311512",
+      "story_title": "Ask HN: Who is hiring? (August 2026)",
+      "comment_text": "<p>Northwind Health | Remote (US) | Senior React Native Engineer | REMOTE | https://boards.greenhouse.io/northwindhealth/jobs/4102</p><p>Patient-facing scheduling and messaging app, Expo managed workflow, HIPAA environment. Salary band published in the posting.</p>",
+      "author": "northwind_talent",
+      "created_at": "2026-08-04T14:05:00Z"
+    },
+    {
+      "objectID": "45311640",
+      "story_title": "Ask HN: Who is hiring? (August 2026)",
+      "comment_text": "<p>incident.io | London, UK or Remote (UK) | Product Engineer, Mobile (React Native) | REMOTE | https://incident.io/careers</p><p>Our on-call app is React Native. You would work across the mobile client and the Go services behind it.</p>",
+      "author": "incident_io",
+      "created_at": "2026-08-04T16:30:00Z"
+    },
+    {
+      "objectID": "45311781",
+      "story_title": "Ask HN: Who is hiring? (August 2026)",
+      "comment_text": "<p>We&#x27;re a tiny bootstrapped team (three people, profitable) and we need help finishing our React Native app before the holidays. Contract to start, could turn into something permanent. Reply here or email is in my profile.</p>",
+      "author": "throwaway8812",
+      "created_at": "2026-08-04T18:02:00Z"
+    },
+    {
+      "objectID": "45311902",
+      "story_title": "Ask HN: Who is hiring? (August 2026)",
+      "comment_text": "<p>Fathom Analytics | Ottawa, ON | Senior Backend Engineer (Go) | REMOTE | https://usefathom.com/careers</p><p>Privacy-first web analytics. This role is backend only, no mobile work.</p>",
+      "author": "fathom_jobs",
+      "created_at": "2026-08-04T19:20:00Z"
+    },
+    {
+      "objectID": "45312044",
+      "story_title": "Ask HN: Who wants to be hired? (August 2026)",
+      "comment_text": "<p>Location: Berlin, DE | Remote: Yes | Willing to relocate: No | Technologies: React Native, Expo, TypeScript | Email: in profile</p><p>Eight years of mobile work, last four on Expo. Looking for a staff role.</p>",
+      "author": "berlin_rn_dev",
+      "created_at": "2026-08-04T20:41:00Z"
+    }
+  ]
+}

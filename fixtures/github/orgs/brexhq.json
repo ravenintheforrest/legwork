@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — sample data",
+  "login": "brexhq",
+  "type": "Organization",
+  "name": "Brex",
+  "blog": "https://brex.com",
+  "description": "Brex builds the financial operating system for growing companies: corporate cards, expense management, travel, and business accounts.",
+  "html_url": "https://github.com/brexhq",
+  "public_repos": 27,
+  "followers": 410,
+  "created_at": "2017-05-30T00:00:00Z"
+}

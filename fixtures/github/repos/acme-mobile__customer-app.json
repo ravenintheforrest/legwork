@@ -1,0 +1,10 @@
+{
+  "_note": "authored fixture — fictional org by design",
+  "full_name": "acme-mobile/customer-app",
+  "html_url": "https://github.com/acme-mobile/customer-app",
+  "description": "Customer app (archived, no longer maintained)",
+  "fork": false,
+  "archived": true,
+  "pushed_at": "2024-11-02T09:00:00Z",
+  "default_branch": "main"
+}

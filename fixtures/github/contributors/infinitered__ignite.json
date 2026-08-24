@@ -1,0 +1,35 @@
+{
+  "_note": "authored fixture — placeholder people by design (no real person is depicted); recorded shape of GET /repos/{owner}/{repo}/contributors, wrapped for the note",
+  "items": [
+    {
+      "login": "infinitered-maintainer-1",
+      "html_url": "https://github.com/infinitered-maintainer-1",
+      "contributions": 310,
+      "type": "User"
+    },
+    {
+      "login": "infinitered-maintainer-2",
+      "html_url": "https://github.com/infinitered-maintainer-2",
+      "contributions": 188,
+      "type": "User"
+    },
+    {
+      "login": "infinitered-maintainer-3",
+      "html_url": "https://github.com/infinitered-maintainer-3",
+      "contributions": 97,
+      "type": "User"
+    },
+    {
+      "login": "dependabot[bot]",
+      "html_url": "https://github.com/apps/dependabot",
+      "contributions": 24,
+      "type": "Bot"
+    },
+    {
+      "login": "infinitered-maintainer-4",
+      "html_url": "https://github.com/infinitered-maintainer-4",
+      "contributions": 41,
+      "type": "User"
+    }
+  ]
+}

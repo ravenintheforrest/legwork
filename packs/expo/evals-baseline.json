@@ -1,0 +1,11 @@
+{
+  "discover": 1,
+  "discover_jobs": 1,
+  "resolve_domain": 1,
+  "enrich_presence": 1,
+  "qualify_verdict": 1,
+  "qualify_segment": 1,
+  "qualify_explanation": 1,
+  "dedupe_domains": 1,
+  "people_presence": 1
+}

@@ -1,0 +1,18 @@
+{
+  "_note": "authored fixture — sample data; recorded shape of GET /search/issues",
+  "total_count": 2,
+  "items": [
+    {
+      "title": "EAS build failing on iOS since Xcode 16 image update",
+      "html_url": "https://github.com/incident-io/on-call-app/issues/214",
+      "state": "open",
+      "created_at": "2026-08-12T09:14:00Z"
+    },
+    {
+      "title": "Track: upgrade to Expo SDK 53",
+      "html_url": "https://github.com/incident-io/on-call-app/issues/198",
+      "state": "open",
+      "created_at": "2026-07-29T16:40:00Z"
+    }
+  ]
+}

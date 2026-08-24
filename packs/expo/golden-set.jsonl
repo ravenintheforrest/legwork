@@ -1,0 +1,18 @@
+{"org":"expo","verdict":"exclude","why":"first-party; not a prospect","labeled_by":"raven","date":"2026-08-20"}
+{"org":"partiful","verdict":"qualified","segment":"A","domain":"partiful.com","why":"consumer events app built on Expo; EAS config + active store cadence","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"usebounce","verdict":"qualified","segment":"A","domain":"usebounce.com","why":"consumer travel app on Expo; EAS config, RN 0.74, steady store updates","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"ongoody","verdict":"qualified","segment":"A","domain":"ongoody.com","why":"consumer gifting app on Expo; EAS config and CI, mid store volume","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"cameo","verdict":"qualified","segment":"A","domain":"cameo.com","why":"consumer marketplace app on Expo; large store review volume, active repo","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"beatgig","verdict":"qualified","segment":"A","domain":"beatgig.com","why":"live-music booking app on Expo; EAS config, small org, no CI workflow","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"incident-io","verdict":"qualified","segment":"B","domain":"incident.io","why":"incident management vendor shipping an on-call app on Expo","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"brexhq","verdict":"qualified","segment":"B","domain":"brex.com","why":"financial product; mobile app on Expo, high store update cadence","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"joinzoe","verdict":"qualified","segment":"B","domain":"joinzoe.com","why":"health product; consumer app on Expo, high store update cadence","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"infinitered","verdict":"qualified","segment":"D","domain":"infinitered.com","why":"React Native consultancy; maintains Ignite, ships client apps on EAS","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"hobbydev-example","verdict":"unqualified","why":"individual side project; no production signals","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"acme-mobile","verdict":"unqualified","why":"archived app, RN 0.64, no store presence","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"partiful-app","verdict":"unqualified","why":"duplicate org spelling of partiful (same domain); dedupe merges its receipts into partiful and drops its confidence","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"mika-hobbyist","verdict":"exclude","why":"GitLab personal namespace — the marginal discover-gitlab hit that never resolves to a company","labeled_by":"bootstrap","date":"2026-08-20"}
+{"org":"incident.io","verdict":"unqualified","source":"jobs","why":"job-post spelling of incident-io (same domain); dedupe merges its hiring receipt into incident-io and drops its confidence","labeled_by":"bootstrap","date":"2026-08-21"}
+{"org":"mollie.com","verdict":"lead","source":"jobs","why":"payments company hiring a React Native mobile engineer on HN; no public Expo repo, so it stays a lead until an org resolves","labeled_by":"bootstrap","date":"2026-08-21"}
+{"org":"ramp.com","verdict":"lead","source":"jobs","why":"posts an Expo/EAS mobile role with a salary band; budget evidence with no public repo behind it","labeled_by":"bootstrap","date":"2026-08-21"}
+{"org":"northwind-health","verdict":"lead","source":"jobs","why":"job post links an applicant-tracking host, not a company domain, so the account is keyed by company name","labeled_by":"bootstrap","date":"2026-08-21"}

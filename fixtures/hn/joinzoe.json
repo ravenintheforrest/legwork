@@ -1,0 +1,19 @@
+{
+  "_note": "authored fixture — sample data; recorded shape of hn.algolia.com/api/v1/search hits",
+  "hits": [
+    {
+      "objectID": "45121440",
+      "story_title": "Ask HN: Who is hiring? (August 2026)",
+      "comment_text": "ZOE | Senior Mobile Engineer (React Native / Expo) | London, hybrid",
+      "author": "zoe_talent",
+      "created_at": "2026-08-03T15:05:00Z"
+    },
+    {
+      "objectID": "44890211",
+      "story_title": "Ask HN: Who is hiring? (July 2026)",
+      "comment_text": "ZOE | Mobile Engineer | London",
+      "author": "zoe_talent",
+      "created_at": "2026-07-01T13:44:00Z"
+    }
+  ]
+}

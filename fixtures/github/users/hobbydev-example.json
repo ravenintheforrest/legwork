@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — fictional person by design",
+  "login": "hobbydev-example",
+  "type": "User",
+  "name": "Hobby Dev (fictional)",
+  "blog": "",
+  "description": null,
+  "html_url": "https://github.com/hobbydev-example",
+  "public_repos": 9,
+  "followers": 3,
+  "created_at": "2019-01-01T00:00:00Z"
+}

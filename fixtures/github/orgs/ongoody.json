@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — sample data",
+  "login": "ongoody",
+  "type": "Organization",
+  "name": "Goody",
+  "blog": "https://ongoody.com",
+  "description": "Goody makes sending a gift as easy as sending a text. The recipient picks the size, the color, and where it ships.",
+  "html_url": "https://github.com/ongoody",
+  "public_repos": 11,
+  "followers": 64,
+  "created_at": "2019-09-05T00:00:00Z"
+}

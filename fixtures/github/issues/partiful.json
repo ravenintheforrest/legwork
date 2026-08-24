@@ -1,0 +1,12 @@
+{
+  "_note": "authored fixture — sample data; recorded shape of GET /search/issues",
+  "total_count": 1,
+  "items": [
+    {
+      "title": "eas update rollout stuck at 0% for Android channel",
+      "html_url": "https://github.com/partiful/mobile/issues/61",
+      "state": "open",
+      "created_at": "2026-08-15T20:31:00Z"
+    }
+  ]
+}

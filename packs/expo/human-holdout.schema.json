@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "legwork human holdout row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "rubric_version", "reviewers", "adjudicated"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "rubric_version": { "const": "1" },
+    "reviewers": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["reviewer", "blind", "include", "scores"],
+        "properties": {
+          "reviewer": { "type": "string" },
+          "blind": { "type": "boolean" },
+          "include": { "type": "boolean" },
+          "segment": { "type": ["string", "null"] },
+          "scores": {
+            "type": "object",
+            "required": ["evidence_correctness", "citation_coverage", "usefulness", "specificity", "uncertainty"],
+            "additionalProperties": false,
+            "properties": {
+              "evidence_correctness": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "citation_coverage": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "usefulness": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "specificity": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "uncertainty": { "type": "integer", "minimum": 1, "maximum": 5 }
+            }
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "adjudicated": { "type": "object" }
+  }
+}

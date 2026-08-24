@@ -1,0 +1,43 @@
+name: fleet
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 10 * * *"   # fixture integrity check; this workflow does not call live sources
+
+permissions:
+  contents: read
+
+jobs:
+  gate-and-console:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run selftest
+      - run: npm run evals
+      - run: npm run dev -- demo
+      - run: npm run dev -- report
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+
+  deploy-console:
+    needs: gate-and-console
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

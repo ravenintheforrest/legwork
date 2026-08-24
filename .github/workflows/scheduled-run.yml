@@ -1,0 +1,232 @@
+name: scheduled-run
+
+# The fleet on a timer, against live sources.
+#
+# This is deliberately a separate workflow from `fleet`. `fleet` is a pure CI gate: it
+# runs fixtures, never calls a live source, and its verdict must stay a statement about
+# the code. Anything that touches the network on a schedule lives here, so a flaky
+# GitHub search can never turn the gate red.
+#
+# What it produces: one markdown digest, committed via pull request. `data/` and `briefs/`
+# are gitignored, so the digest is the only artifact that survives the runner — and the
+# only thing this workflow is allowed to commit.
+
+on:
+  schedule:
+    # Monday 13:00 UTC. The reasoning, so a later reader does not have to guess:
+    #   - Weekly, not daily. `discover` sweeps public code search over a 30-day window and
+    #     the underlying signals (eas.json pushes, HN hiring threads, RN version bumps)
+    #     move on a weekly cadence at best. A daily run would spend GitHub quota
+    #     re-finding the same orgs and hand a human the same queue five times.
+    #   - Monday, because the digest ends in a review queue and a human works that queue
+    #     at the start of a week, not at the end of one.
+    #   - 13:00 UTC is 09:00 America/New_York in EDT (08:00 in EST) — the digest and its
+    #     PR are waiting before the operator's day starts.
+    #   - GitHub queues cron jobs and delays them under load, worst at the top of the hour.
+    #     If this consistently drifts more than ~20 minutes, move it to :07. Do not add
+    #     retries; a late fleet run is fine, a doubled one is not.
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+    inputs:
+      since_days:
+        description: "Activity window in days"
+        required: false
+        default: "30"
+      mode:
+        description: "live calls public sources; fixture replays fixtures/ and touches no network"
+        required: false
+        type: choice
+        options: [live, fixture]
+        default: live
+
+# Never two at once. The runner takes a file lock on account state, and overlapping runs
+# would either deadlock on it or interleave run-log records into an unreadable pass.
+# Queue the second one instead of cancelling: a scheduled run that already spent GitHub
+# quota should be allowed to finish and write its digest.
+concurrency:
+  group: scheduled-run
+  cancel-in-progress: false
+
+# Least privilege, spelled out: `contents: write` to push the digest branch,
+# `pull-requests: write` to open the PR. The fleet's own GitHub reads use the same
+# built-in token and only need public read, which every token has.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    # The Slack step's condition needs the secret's presence, and `secrets` is not allowed
+    # in a step `if:`. Lifting it into the job env is the sanctioned way; the value is
+    # masked in logs either way.
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    # A live pass is minutes, not tens of minutes. This ceiling exists to stop a hung
+    # HTTP call from holding the concurrency group all week, not to bound normal work.
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+
+      - run: npm ci
+
+      # Dispatch inputs are user text. Validate them here, once, rather than letting them
+      # reach a command line unchecked.
+      - name: Resolve run parameters
+        id: params
+        env:
+          MODE_IN: ${{ inputs.mode || 'live' }}
+          SINCE_IN: ${{ inputs.since_days || '30' }}
+        run: |
+          set -euo pipefail
+          case "$MODE_IN" in
+            live|fixture) ;;
+            *) echo "mode must be live or fixture (got '$MODE_IN')" >&2; exit 1 ;;
+          esac
+          case "$SINCE_IN" in
+            ''|*[!0-9]*) echo "since_days must be a positive integer (got '$SINCE_IN')" >&2; exit 1 ;;
+          esac
+          [ "$SINCE_IN" -ge 1 ] || { echo "since_days must be at least 1" >&2; exit 1; }
+          echo "mode=$MODE_IN" >> "$GITHUB_OUTPUT"
+          echo "since_days=$SINCE_IN" >> "$GITHUB_OUTPUT"
+
+      - name: Check for a model key
+        id: model
+        run: echo "present=${{ secrets.ANTHROPIC_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
+
+      # ANTHROPIC_API_KEY is not set in this repo, so this is the normal path, not the
+      # exception. The runner already handles it: with no key (and no LEGWORK_LLM=cli),
+      # `makeLLM` returns null, the `brief` unit gets `llm: null`, and it writes the
+      # deterministic evidence-only template instead of calling a model. Zero tokens,
+      # zero dollars, no model prose — but briefs still get written, accounts still reach
+      # the confidence gate, and the review queue the digest reports on still fills.
+      #
+      # That is why this runs the whole pipeline in both cases rather than a `--agent`
+      # sequence that omits `brief`. Omitting `brief` would leave the queue permanently
+      # empty on the default path, and running units one-by-one sets `fullFleet = false`
+      # in the runner, which disables the live freshness invalidation and the
+      # `last_full_refresh` stamp that a scheduled run exists to maintain. The runner
+      # supports no "skip this unit" flag and none was invented.
+      #
+      # The digest and the job summary state which of the two happened.
+      - name: Run the fleet
+        id: fleet
+        env:
+          # Public-data reads only: code search, org lookups, contributors. The built-in
+          # token's default read scope covers all of it.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MODE: ${{ steps.params.outputs.mode }}
+          SINCE_DAYS: ${{ steps.params.outputs.since_days }}
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.model.outputs.present }}" = "true" ]; then
+            echo "ANTHROPIC_API_KEY present — brief will use the model."
+          else
+            echo "ANTHROPIC_API_KEY absent — brief falls back to the evidence-only template."
+          fi
+          if [ "$MODE" = "fixture" ]; then
+            npm run dev -- run --fixture --since "${SINCE_DAYS}d"
+          else
+            npm run dev -- run --since "${SINCE_DAYS}d"
+          fi
+
+      # `always()` so a failed pass still gets a digest and a job summary. This is not
+      # `continue-on-error`: the fleet step's failure still fails the job. It just does
+      # not also cost us the record of what broke.
+      - name: Write the digest
+        id: digest
+        if: always()
+        run: |
+          set -euo pipefail
+          npx tsx -e "
+          import { appendFileSync, readFileSync } from 'node:fs';
+          import { writeDigest } from './src/digest.ts';
+          const { file, summary } = writeDigest();
+          appendFileSync(process.env.GITHUB_OUTPUT, 'file=' + file + '\n');
+          appendFileSync(process.env.GITHUB_OUTPUT, 'summary<<DIGEST_SUMMARY\n' + summary + '\nDIGEST_SUMMARY\n');
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, readFileSync(file, 'utf8') + '\n');
+          "
+
+      - name: Note the model path in the job summary
+        if: always() && steps.digest.outputs.file != ''
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.model.outputs.present }}" = "true" ]; then
+            echo "> \`ANTHROPIC_API_KEY\` was present: the full pipeline ran and \`brief\` used the model." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "> \`ANTHROPIC_API_KEY\` is not set in this repository. The full pipeline ran, but \`brief\` had no model and wrote the deterministic evidence-only template. No tokens were spent and no model prose was generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "> Fleet step outcome: \`${{ steps.fleet.outcome }}\`." >> "$GITHUB_STEP_SUMMARY"
+
+      # The digest is `human` tier: this opens a PR and stops. Nothing here merges it, and
+      # nothing should be added that does.
+      - name: Open a pull request with the digest
+        if: always() && steps.digest.outputs.file != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST_FILE: ${{ steps.digest.outputs.file }}
+          SUMMARY: ${{ steps.digest.outputs.summary }}
+          FLEET_OUTCOME: ${{ steps.fleet.outcome }}
+          RUN_MODE: ${{ steps.params.outputs.mode }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="digest/$(basename "$DIGEST_FILE" .md)-${GITHUB_RUN_ID}"
+          git switch -c "$BRANCH"
+
+          # By name, never `git add -A`. data/ and briefs/ are gitignored, but the PR
+          # carrying exactly one file is a property worth enforcing rather than assuming.
+          git add -- "$DIGEST_FILE"
+          if git diff --cached --quiet; then
+            echo "digest is byte-identical to what is already committed — no PR needed"
+            exit 0
+          fi
+          if [ -n "$(git diff --cached --name-only | grep -v -F -x -- "$DIGEST_FILE" || true)" ]; then
+            echo "refusing to open a PR: something other than the digest is staged" >&2
+            git diff --cached --name-only >&2
+            exit 1
+          fi
+
+          git commit -m "digest: $(basename "$DIGEST_FILE" .md) ($RUN_MODE)"
+          git push origin "$BRANCH"
+
+          # Build the body without letting the summary's own text be re-expanded by the
+          # shell — it contains dollar amounts.
+          printf '%s\n\n' "$SUMMARY" > /tmp/pr-body.md
+          printf 'Fleet step outcome: `%s`. Mode: `%s`. Digest: `%s`.\n' \
+            "$FLEET_OUTCOME" "$RUN_MODE" "$DIGEST_FILE" >> /tmp/pr-body.md
+          {
+            printf '\n'
+            printf 'This PR carries the run digest and nothing else. `data/` and `briefs/` are\n'
+            printf 'gitignored, so the digest is the whole record of what the scheduled run did.\n\n'
+            printf 'Merging is a human decision by design (registry `autonomy_tiers.human`).\n'
+            printf 'Nothing here auto-merges. Read the digest, work the review queue it names,\n'
+            printf 'then merge.\n'
+          } >> /tmp/pr-body.md
+
+          gh pr create \
+            --base "$GITHUB_REF_NAME" \
+            --head "$BRANCH" \
+            --title "digest: $(basename "$DIGEST_FILE" .md)" \
+            --body-file /tmp/pr-body.md
+
+      # Optional. No webhook secret, no notification, no failure — the digest and its PR
+      # are the durable output; Slack is a convenience.
+      - name: Post the summary to Slack
+        if: always() && env.SLACK_WEBHOOK_URL != '' && steps.digest.outputs.summary != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SUMMARY: ${{ steps.digest.outputs.summary }}
+        run: |
+          set -euo pipefail
+          jq -n --arg text "$SUMMARY" '{ text: $text }' \
+            | curl --silent --show-error --fail-with-body \
+                   --header 'Content-Type: application/json' \
+                   --data @- "$SLACK_WEBHOOK_URL" > /dev/null

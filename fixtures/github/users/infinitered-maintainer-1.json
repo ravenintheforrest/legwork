@@ -1,0 +1,14 @@
+{
+  "_note": "authored fixture — placeholder person by design (no real person is depicted); recorded shape of GET /users/{login}",
+  "login": "infinitered-maintainer-1",
+  "type": "User",
+  "name": "Maintainer One",
+  "company": "Infinite Red",
+  "blog": "https://infinitered.com",
+  "location": "Remote",
+  "bio": "Mobile engineer at Infinite Red. Maintains Ignite (Expo / React Native).",
+  "html_url": "https://github.com/infinitered-maintainer-1",
+  "public_repos": 10,
+  "followers": 40,
+  "created_at": "2015-03-01T00:00:00Z"
+}

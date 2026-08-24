@@ -1,0 +1,17 @@
+{
+  "_note": "authored fixture — fictional org and people by design",
+  "items": [
+    {
+      "login": "acme-mobile-dev-1",
+      "html_url": "https://github.com/acme-mobile-dev-1",
+      "contributions": 44,
+      "type": "User"
+    },
+    {
+      "login": "dependabot[bot]",
+      "html_url": "https://github.com/apps/dependabot",
+      "contributions": 24,
+      "type": "Bot"
+    }
+  ]
+}
